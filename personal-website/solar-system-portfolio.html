@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Portfolio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+          sans-serif;
+      }
+
+      body {
+        background-color: #282727;
+        color: #333;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: #333;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .announcement-bar {
+        background-color: #5fff7a;
+        color: #333;
+        text-align: center;
+        padding: 10px 0;
+        font-weight: 500;
+      }
+
+      .announcement-bar a {
+        color: #333;
+        text-decoration: none;
+      }
+
+      .nav-container {
+        border-bottom: 1px solid #e1e1e1;
+        background-color: #0d0808;
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 15px 20px;
+      }
+
+      .nav-section {
+        display: flex;
+        align-items: center;
+      }
+
+      .nav-section a {
+        margin: 0 10px;
+        color: #666;
+      }
+
+      .nav-section span {
+        color: #999;
+        margin: 0 5px;
+      }
+
+      .profile-link {
+        display: flex;
+        align-items: center;
+      }
+
+      .rocket-icon {
+        margin-left: 5px;
+      }
+
+      .main-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      .profile-image {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        margin: 0 auto 30px;
+        display: block;
+        background-color: #ddd;
+        overflow: hidden;
+      }
+
+      .profile-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .profile-intro {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .profile-intro h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .highlight {
+        background-color: #5fff7a;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
+      }
+
+      .profile-details {
+        text-align: center;
+        color: #666;
+        margin-bottom: 40px;
+        font-size: 0.95rem;
+      }
+
+      .profile-details a {
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .divider {
+        height: 1px;
+        background-color: #e1e1e1;
+        margin: 40px 0;
+      }
+
+      .two-column {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        gap: 40px;
+      }
+
+      .column {
+        flex: 1;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .experience-section {
+        margin-top: 40px;
+      }
+
+      .filter-buttons {
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .filter-button {
+        background: none;
+        border: none;
+        padding: 5px 10px;
+        margin-right: 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        color: #666;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        position: relative;
+      }
+
+      .filter-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-left: 8px;
+      }
+
+      .filter-button:hover {
+        color: #ffffff;
+      }
+
+      .filter-button.active {
+        font-weight: 500;
+        color: #ffffff;
+      }
+
+      .experience-cards {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1fr;
+      }
+
+      .experience-card {
+        background-color: #0d0808;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .experience-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-header {
+        margin-bottom: 15px;
+      }
+
+      .card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-left: 8px;
+      }
+
+      .card-subtitle {
+        color: #888;
+        font-size: 0.9rem;
+      }
+
+      .card-content {
+        margin-bottom: 15px;
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 15px;
+      }
+
+      .tag {
+        background-color: #f5f5f5;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-right: 6px;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+        color: #666;
+      }
+
+      .card-buttons {
+        margin-top: 15px;
+      }
+
+      .card-button {
+        display: block;
+        text-align: center;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+
+      .dark-button {
+        background-color: #333;
+        color: white;
+      }
+
+      .dark-button:hover {
+        background-color: #444;
+        text-decoration: none;
+      }
+
+      .light-button {
+        background-color: #f0d0ff;
+        color: #333;
+      }
+
+      .light-button:hover {
+        background-color: #f5deff;
+        text-decoration: none;
+      }
+
+      #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: 0.5;
+      }
+
+      /* Additional 3D elements style */
+      .profile-3d-container {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 30px;
+      }
+
+      /* Type indicators */
+      .type-source-code .status-indicator {
+        background-color: #5fff7a;
+      }
+
+      .type-live-demo .status-indicator {
+        background-color: #333;
+      }
+
+      .type-blog-post .status-indicator {
+        background-color: #f0d0ff;
+      }
+
+      /* Hide cards when filtered */
+      .experience-card.hidden {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .two-column {
+          flex-direction: column;
+        }
+
+        .profile-image {
+          width: 150px;
+          height: 150px;
+        }
+      }
+
+      body {
+        background-color: #282727;
+        color: #ffffff; /* Change text color to white for better contrast */
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: #5fff7a; /* Use a bright green for links to make them stand out */
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .nav-section a {
+        color: #ffffff; /* Make navigation links white */
+      }
+
+      .nav-section span {
+        color: #aaaaaa; /* Use a lighter gray for separators */
+      }
+
+      .profile-details {
+        text-align: center;
+        color: #dddddd; /* Light gray for better contrast */
+      }
+
+      .filter-button {
+        color: #ffffff; /* Make filter button text white */
+      }
+
+      .filter-button:hover {
+        color: #5fff7a; /* Bright green on hover */
+      }
+
+      .card-title {
+        color: #ffffff; /* Make card titles white */
+      }
+
+      .card-subtitle {
+        color: #cccccc; /* Light gray for subtitles */
+      }
+
+      .tag {
+        background-color: #444444; /* Darker background for tags */
+        color: #ffffff; /* White text for tags */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-container"></div>
+
+    <div class="announcement-bar">
+      <span>🌠 Check out the results of my summer hackathon, Covehack! 🌠</span>
+    </div>
+
+    <div class="nav-container">
+      <nav>
+        <div class="nav-section">
+          <span>Site:</span>
+          <a href="#">Home</a>
+          <span>/</span>
+          <a href="#">Socials</a>
+        </div>
+        <div class="nav-section profile-link">
+          <a href="#">Ahmed Salama</a>
+          <span class="rocket-icon">🚀</span>
+        </div>
+        <div class="nav-section">
+          <span>Blog:</span>
+          <a href="#">Articles</a>
+          <span>/</span>
+          <a href="#">Series</a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="main-content">
+      <div class="profile-3d-container">
+        <div class="profile-image">
+          <img src="./profile.jpg" alt="Profile Image" />
+        </div>
+      </div>
+
+      <div class="profile-intro">
+        <h1>Hey, I'm <span class="highlight">Ahmed Salama</span></h1>
+      </div>
+
+      <div class="profile-details">
+        <p>
+          First-class honors with distinction in Computer Science BSc from
+          <a href="#">University</a>. Check out my <a href="#">live stats</a> or
+          <a href="#">resume</a>. Let's <a href="#">chat</a>. Join my
+          <a href="#">Discord</a> (as member #1234).
+        </p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="two-column">
+        <div class="column">
+          <h2 class="section-title">Who I am</h2>
+          <p>
+            I'm 26 and have a pet named Buddy. I love entrepreneurship, can ride
+            a unicycle, and am an athlete. I enjoy snowboarding, rock climbing,
+            and exploring new technologies. I'm fascinated by how things work
+            and always looking to learn more.
+          </p>
+        </div>
+        <div class="column">
+          <h2 class="section-title">My story</h2>
+          <p>
+            I coded my first (retrospectively, horribly-written) video game back
+            in tenth grade which got me hooked on code. Soon after that, while
+            still in high school, I got my first job as a developer at a local
+            startup. Since then, I've been building projects that solve real
+            problems.
+          </p>
+        </div>
+      </div>
+
+      <div class="experience-section">
+        <h2 class="section-title">Experience</h2>
+        <div class="filter-buttons">
+          <span>Buttons:</span>
+          <button class="filter-button active" data-filter="all">All</button>
+          <button class="filter-button" data-filter="source-code">
+            Source code
+            <span
+              class="filter-indicator"
+              style="background-color: #5fff7a"
+            ></span>
+          </button>
+          <button class="filter-button" data-filter="live-demo">
+            Live demo(s)
+            <span
+              class="filter-indicator"
+              style="background-color: #f75151"
+            ></span>
+          </button>
+          <button class="filter-button" data-filter="blog-post">
+            Blog post(s)
+            <span
+              class="filter-indicator"
+              style="background-color: #b730f6"
+            ></span>
+          </button>
+        </div>
+
+        <div class="experience-cards">
+          <div class="experience-card" data-types="source-code blog-post">
+            <div class="card-header">
+              <div class="card-title">
+                Confesi
+                <span class="status-indicator type-source-code"></span>
+              </div>
+              <p class="card-subtitle">March 2023 - August 2024 • Founder</p>
+            </div>
+            <div class="card-content">
+              <p>
+                A social media app exclusively for university students. Get
+                ready to ROFL. Share your campus stories, embrace your quirks,
+                and laugh with your community! Launching soon. Join the
+                alpha/beta tests. Hundreds-of-thousands of lines of code.
+              </p>
+            </div>
+            <div class="tag-list">
+              <span class="tag">#Gin</span>
+              <span class="tag">#Hive</span>
+              <span class="tag">#Drift</span>
+              <span class="tag">#Dart</span>
+              <span class="tag">#Figma</span>
+              <span class="tag">#Docker</span>
+              <span class="tag">#Firebase</span>
+              <span class="tag">#HTML</span>
+              <span class="tag">#CSS</span>
+              <span class="tag">#Redis</span>
+              <span class="tag">#JavaScript</span>
+            </div>
+            <div class="card-buttons">
+              <a href="#" class="card-button dark-button">Website</a>
+              <a href="#" class="card-button light-button">Devlogs</a>
+            </div>
+          </div>
+
+          <div class="experience-card" data-types="source-code live-demo">
+            <div class="card-header">
+              <div class="card-title">
+                Kurlox
+                <span class="status-indicator type-source-code"></span>
+              </div>
+              <p class="card-subtitle">April 2024 - Current</p>
+            </div>
+            <div class="card-content">
+              <p>
+                My large-scale project: a novel decentralized search engine.
+                It's designed to be an alternative to Google, Bing, DuckDuckGo,
+                and more. It uses a multitude of highly theoretical and
+                cutting-edge computing concepts.
+              </p>
+            </div>
+            <div class="tag-list">
+              <span class="tag">#Go</span>
+              <span class="tag">#Protobuf</span>
+              <span class="tag">#Testify</span>
+              <span class="tag">#Weaviate</span>
+              <span class="tag">#IPFS</span>
+              <span class="tag">#Python</span>
+              <span class="tag">#Docker</span>
+              <span class="tag">#Playwright</span>
+              <span class="tag">#Next.js</span>
+              <span class="tag">#TypeScript</span>
+              <span class="tag">#GitHub Actions</span>
+            </div>
+            <div class="card-buttons">
+              <a href="#" class="card-button dark-button">Website</a>
+            </div>
+          </div>
+
+          <div class="experience-card" data-types="blog-post">
+            <div class="card-header">
+              <div class="card-title">
+                Portfolio Website
+                <span class="status-indicator type-blog-post"></span>
+              </div>
+              <p class="card-subtitle">January 2024 - March 2024</p>
+            </div>
+            <div class="card-content">
+              <p>
+                Created a personal portfolio website with Three.js integration
+                for stunning 3D visuals. The website features interactive 3D
+                elements that respond to user interaction and create an
+                immersive experience.
+              </p>
+            </div>
+            <div class="tag-list">
+              <span class="tag">#HTML</span>
+              <span class="tag">#CSS</span>
+              <span class="tag">#JavaScript</span>
+              <span class="tag">#Three.js</span>
+              <span class="tag">#WebGL</span>
+              <span class="tag">#Responsive Design</span>
+            </div>
+            <div class="card-buttons">
+              <a href="#" class="card-button dark-button">Website</a>
+              <a href="#" class="card-button light-button">Blog Post</a>
+            </div>
+          </div>
+
+          <div
+            class="experience-card"
+            data-types="source-code live-demo blog-post"
+          >
+            <div class="card-header">
+              <div class="card-title">
+                3D Physics Playground
+                <span class="status-indicator type-source-code"></span>
+                <span class="status-indicator type-live-demo"></span>
+                <span class="status-indicator type-blog-post"></span>
+              </div>
+              <p class="card-subtitle">September 2023 - December 2023</p>
+            </div>
+            <div class="card-content">
+              <p>
+                An interactive web-based physics playground using Three.js and
+                Cannon.js. Users can create, manipulate, and experiment with
+                various 3D objects in a physically accurate environment.
+              </p>
+            </div>
+            <div class="tag-list">
+              <span class="tag">#Three.js</span>
+              <span class="tag">#Cannon.js</span>
+              <span class="tag">#JavaScript</span>
+              <span class="tag">#Physics</span>
+              <span class="tag">#WebGL</span>
+              <span class="tag">#Interactive</span>
+            </div>
+            <div class="card-buttons">
+              <a href="#" class="card-button dark-button">Live Demo</a>
+              <a href="#" class="card-button light-button">Blog Post</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // Three.js setup for Solar System
+      const canvas = document.getElementById("canvas-container");
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x000011, 1);
+      canvas.appendChild(renderer.domElement);
+
+      // Create a starfield with lines
+      const starsGeometry = new THREE.BufferGeometry();
+      const starCount = 10000; // Number of stars
+      const starsPositions = new Float32Array(starCount * 6); // Each line needs 2 points (start and end)
+
+      for (let i = 0; i < starCount * 6; i += 6) {
+        const x = (Math.random() - 0.5) * 2000; // Random x position
+        const y = (Math.random() - 0.5) * 2000; // Random y position
+        const z = (Math.random() - 0.5) * 2000; // Random z position
+
+        // Start point of the line
+        starsPositions[i] = x;
+        starsPositions[i + 1] = y;
+        starsPositions[i + 2] = z;
+
+        // End point of the line (slightly closer to the camera)
+        starsPositions[i + 3] = x;
+        starsPositions[i + 4] = y;
+        starsPositions[i + 5] = z + 50; // Length of the line
+      }
+
+      starsGeometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(starsPositions, 3)
+      );
+
+      const starsMaterial = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.8,
+      });
+
+      const starField = new THREE.LineSegments(starsGeometry, starsMaterial);
+      scene.add(starField);
+
+      // Create Sun
+      const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+      const sunMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffcc33,
+        transparent: true,
+        opacity: 0.9,
+      });
+      const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+      sun.position.set(0, 0, -50);
+      // scene.add(sun);
+
+      // Create a PointLight to simulate the sun emitting light
+      const sunLight2 = new THREE.PointLight(0xffcc33, 1.5, 200); // Color, intensity, distance
+      sunLight2.position.copy(sun.position); // Position the light at the sun's location
+      // scene.add(sunLight2);
+
+      // Create sun glow
+      const sunGlowGeometry = new THREE.SphereGeometry(6, 32, 32);
+      const sunGlowMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffcc33,
+        transparent: true,
+        opacity: 0.3,
+      });
+      const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
+      // sun.add(sunGlow);
+
+      // Create planets
+      const planets = [];
+      const planetColors = [
+        0xa5a5a5, // Mercury - gray
+        0xe5c17a, // Venus - tan
+        0x3498db, // Earth - blue
+        0xc0392b, // Mars - red
+        0xf39c12, // Jupiter - orange
+        0xf1c40f, // Saturn - yellow
+        0x85c1e9, // Uranus - light blue
+        0x3498db, // Neptune - dark blue
+      ];
+
+      const planetSizes = [0.8, 1.5, 1.6, 1.2, 3.5, 3, 2.5, 2.4];
+      const planetDistances = [12, 18, 25, 33, 45, 58, 70, 85];
+      const planetOrbitalSpeeds = [
+        0.01, 0.0075, 0.006, 0.005, 0.003, 0.002, 0.0015, 0.001,
+      ];
+
+      for (let i = 0; i < 8; i++) {
+        const planetGeometry = new THREE.SphereGeometry(planetSizes[i], 32, 32);
+        const planetMaterial = new THREE.MeshBasicMaterial({
+          color: planetColors[i],
+          transparent: true,
+          opacity: 0.9,
+        });
+
+        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+
+        // Create orbit ring
+        const orbitGeometry = new THREE.RingGeometry(
+          planetDistances[i] - 0.1,
+          planetDistances[i] + 0.1,
+          64
+        );
+        const orbitMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.1,
+        });
+        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+        orbit.rotation.x = Math.PI / 2;
+        orbit.position.copy(sun.position);
+        // scene.add(orbit);
+
+        // Set initial planet position
+        const angle = Math.random() * Math.PI * 2;
+        planet.position.x =
+          Math.cos(angle) * planetDistances[i] + sun.position.x;
+        planet.position.z =
+          Math.sin(angle) * planetDistances[i] + sun.position.z;
+        planet.position.y = sun.position.y;
+
+        // scene.add(planet);
+
+        // Store planet info for animation
+        planets.push({
+          mesh: planet,
+          distance: planetDistances[i],
+          speed: planetOrbitalSpeeds[i],
+          angle: angle,
+        });
+
+        // Add Saturn's rings to the 6th planet (index 5)
+        if (i === 5) {
+          const ringGeometry = new THREE.RingGeometry(4, 6, 32);
+          const ringMaterial = new THREE.MeshBasicMaterial({
+            color: 0xdaa520,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.8,
+          });
+          const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+          ring.rotation.x = Math.PI / 2;
+          planet.add(ring);
+        }
+      }
+
+      // Add ambient light
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      // scene.add(ambientLight);
+
+      // Add a point light at the sun's position
+      const sunLight = new THREE.PointLight(0xffffff, 1, 100);
+      sunLight.position.copy(sun.position);
+      // scene.add(sunLight);   
+
+      // Position camera
+      camera.position.set(0, 100, 0);
+      camera.lookAt(sun.position);
+
+      // Add mouse movement effect
+      let mouseX = 0;
+      let mouseY = 0;
+
+      document.addEventListener("mousemove", (event) => {
+        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        mouseY = (event.clientY / window.innerHeight) * 2 - 1;
+      });
+
+      // Animation function
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Rotate sun
+        sun.rotation.y += 0.001;
+
+        // Update camera position based on mouse movement (subtle)
+        camera.position.x += (mouseX * 5 - camera.position.x) * 0.01;
+        camera.position.y += (-mouseY * 5 - camera.position.y) * 0.01;
+        camera.lookAt(sun.position);
+
+        // Animate planets orbiting around the sun
+        planets.forEach((planet) => {
+          planet.angle += planet.speed;
+          planet.mesh.position.x =
+            Math.cos(planet.angle) * planet.distance + sun.position.x;
+          planet.mesh.position.z =
+            Math.sin(planet.angle) * planet.distance + sun.position.z;
+          planet.mesh.rotation.y += planet.speed * 5;
+        });
+
+        // Pulse the sun glow
+        const pulseFactor = 1 + Math.sin(Date.now() * 0.001) * 0.1;
+        sunGlow.scale.set(pulseFactor, pulseFactor, pulseFactor);
+
+        // Light-speed starfield effect with lines
+        const positions = starsGeometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 6) {
+          // Move both start and end points of the line
+          positions[i + 2] += 50; // Start point z
+          positions[i + 5] += 50; // End point z
+
+          if (positions[i + 2] > 1000) {
+            // Reset line to far position when it moves past the camera
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = -1000;
+
+            // Reset start point
+            positions[i] = x;
+            positions[i + 1] = y;
+            positions[i + 2] = z;
+
+            // Reset end point
+            positions[i + 3] = x;
+            positions[i + 4] = y;
+            positions[i + 5] = z + 50; // Length of the line
+          }
+        }
+        starsGeometry.attributes.position.needsUpdate = true;
+
+        renderer.render(scene, camera);
+      }
+
+      // Handle window resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Start animation
+      animate();
+
+      // Filter functionality
+      const filterButtons = document.querySelectorAll(".filter-button");
+      const experienceCards = document.querySelectorAll(".experience-card");
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          // Remove active class from all buttons
+          filterButtons.forEach((btn) => btn.classList.remove("active"));
+
+          // Add active class to clicked button
+          button.classList.add("active");
+
+          const filterValue = button.getAttribute("data-filter");
+
+          // Show/hide cards based on filter
+          experienceCards.forEach((card) => {
+            if (filterValue === "all") {
+              card.classList.remove("hidden");
+            } else {
+              const cardTypes = card.getAttribute("data-types");
+              if (cardTypes.includes(filterValue)) {
+                card.classList.remove("hidden");
+              } else {
+                card.classList.add("hidden");
+              }
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

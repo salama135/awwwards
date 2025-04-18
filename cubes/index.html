@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Cube Formation Animation with Mouse Tilt</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #0a0a2a;
+        color: white;
+        font-family: "Arial", sans-serif;
+        height: 300vh;
+        overflow-x: hidden;
+      }
+
+      .container {
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      .scene {
+        perspective: 1000px;
+        width: 400px;
+        height: 400px;
+      }
+
+      .cube-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(-20deg) rotateY(-30deg);
+      }
+      .small-cube {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: linear-gradient(
+          145deg,
+          rgba(100, 100, 255, 0.7),
+          rgba(50, 50, 200, 0.7)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transform-style: preserve-3d;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.8s;
+        will-change: transform, opacity; /* GPU optimization */
+      }
+
+      .face {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: rgba(100, 100, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backface-visibility: visible;
+      }
+
+      .face.front {
+        transform: translateZ(5px);
+      }
+
+      .face.back {
+        transform: translateZ(-5px) rotateY(180deg);
+      }
+
+      .face.right {
+        transform: translateX(5px) rotateY(90deg);
+      }
+
+      .face.left {
+        transform: translateX(-5px) rotateY(-90deg);
+      }
+
+      .face.top {
+        transform: translateY(-5px) rotateX(90deg);
+      }
+
+      .face.bottom {
+        transform: translateY(5px) rotateX(-90deg);
+      }
+
+      .info {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      .controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      button {
+        background-color: #4444ff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 0 5px;
+      }
+
+      button:hover {
+        background-color: #5555ff;
+      }
+
+      h1 {
+        position: fixed;
+        top: 20px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 2rem;
+        color: white;
+        text-shadow: 0 0 10px rgba(100, 100, 255, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Scroll to Build the Cube</h1>
+
+    <div class="container">
+      <div class="scene">
+        <div class="cube-container" id="cubeContainer"></div>
+      </div>
+    </div>
+
+    <div class="info">
+      <p>Scroll down to build the cube</p>
+      <p>Small cubes: <span id="cubeCount">0</span>/1000</p>
+      <p>Move mouse to tilt the cube</p>
+    </div>
+
+    <div class="controls">
+      <button id="resetBtn">Reset</button>
+      <button id="buildBtn">Build Instantly</button>
+    </div>
+
+    <script>
+      const cubeContainer = document.getElementById("cubeContainer");
+      const cubeCount = document.getElementById("cubeCount");
+      const resetBtn = document.getElementById("resetBtn");
+      const buildBtn = document.getElementById("buildBtn");
+
+      // Define cube dimensions to reach approximately 1000 cubes
+      const gridSize = 10; // 10x10x10 = 1000 potential cubes
+      const smallCubes = [];
+      const maxCubes = gridSize * gridSize * gridSize; // 1000 cubes
+      let currentCubeCount = 0;
+      const positions = [];
+      for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+          for (let z = 0; z < gridSize; z++) {
+            positions.push({ x, y, z });
+          }
+        }
+      }
+      const cubeSize = 10; // Size of each cube
+      // Create distribution of up to 1000 cubes in a more interesting pattern
+      function createCubes() {
+        const fragment = document.createDocumentFragment(); // Batch DOM updates
+        positions.forEach(({ x, y, z }) => {
+          const smallCube = document.createElement("div");
+          smallCube.className = "small-cube";
+
+          // Calculate position relative to center
+          const posX = (x - (gridSize - 1) / 2) * cubeSize;
+          const posY = (y - (gridSize - 1) / 2) * cubeSize;
+          const posZ = (z - (gridSize - 1) / 2) * cubeSize;
+
+          smallCube.style.transform = `translate3d(${posX}px, ${posY}px, ${posZ}px)`;
+          fragment.appendChild(smallCube);
+
+          smallCubes.push({
+            element: smallCube,
+            x,
+            y,
+            z,
+            posX,
+            posY,
+            posZ,
+            added: false,
+          });
+        });
+        cubeContainer.appendChild(fragment); // Append all cubes at once
+      }
+
+      // Call the function to create cubes
+      createCubes();
+
+      let visible = 0;
+
+      window.addEventListener("scroll", () => {
+        const scrollPercentage =
+          window.scrollY / (document.body.scrollHeight - window.innerHeight);
+        const cubesToShow = Math.floor(scrollPercentage * smallCubes.length);
+
+        for (let i = 0; i < cubesToShow; i++) {
+          if (i < smallCubes.length) {
+            smallCubes[i].element.style.opacity = 1;
+          }
+        }
+      });
+
+      // Throttle scroll event
+      let scrollTimeout;
+      window.addEventListener("scroll", () => {
+        if (scrollTimeout) return;
+        scrollTimeout = setTimeout(() => {
+          const scrollPercentage =
+            window.scrollY / (document.body.scrollHeight - window.innerHeight);
+          const cubesToShow = Math.floor(scrollPercentage * smallCubes.length);
+
+          // Add new cubes
+          for (let i = visible; i < cubesToShow; i++) {
+            if (i < smallCubes.length) {
+              smallCubes[i].element.style.opacity = 1;
+              smallCubes[i].added = true;
+              visible++;
+            }
+          }
+
+          // Remove cubes if scrolling back up
+          for (let i = visible - 1; i >= cubesToShow; i--) {
+            if (i >= 0) {
+              smallCubes[i].element.style.opacity = 0;
+              smallCubes[i].added = false;
+              visible--;
+            }
+          }
+
+          cubeCount.textContent = visible;
+          scrollTimeout = null; // Reset the timeout
+        }, 50); // Adjust delay as needed
+      });
+
+      // Handle mouse movement for tilting
+      document.addEventListener("mousemove", (e) => {
+        const xAxis = (window.innerWidth / 2 - e.clientX) / 25;
+        const yAxis = (window.innerHeight / 2 - e.clientY) / 25;
+
+        cubeContainer.style.transform = `rotateY(${xAxis}deg) rotateX(${-yAxis}deg)`;
+      });
+
+      // Reset button
+      resetBtn.addEventListener("click", () => {
+        smallCubes.forEach((cube) => {
+          cube.element.style.opacity = 0;
+          cube.added = false;
+        });
+        visible = 0;
+        cubeCount.textContent = visible;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // Build instantly button
+      buildBtn.addEventListener("click", () => {
+        smallCubes.forEach((cube) => {
+          cube.element.style.opacity = 1;
+          cube.added = true;
+        });
+        visible = smallCubes.length;
+        cubeCount.textContent = visible;
+      });
+    </script>
+  </body>
+</html>
