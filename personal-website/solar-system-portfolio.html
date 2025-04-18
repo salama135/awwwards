@@ -56,8 +56,9 @@
         background-color: #5fff7a;
         color: #333;
         text-align: center;
-        padding: 10px 0;
+        padding: 10px 20px;
         font-weight: 500;
+        font-size: 0.9rem;
       }
 
       .announcement-bar a {
@@ -68,6 +69,9 @@
       .nav-container {
         border-bottom: 1px solid rgba(225, 225, 225, 0.1);
         background-color: var(--nav-background);
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
 
       nav {
@@ -82,16 +86,22 @@
       .nav-section {
         display: flex;
         align-items: center;
+        gap: 10px;
       }
 
       .nav-section a {
-        margin: 0 10px;
         color: var(--text-color);
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: opacity 0.2s;
+      }
+
+      .nav-section a:hover {
+        opacity: 0.8;
       }
 
       .nav-section span {
         color: var(--separator-color);
-        margin: 0 5px;
       }
 
       .profile-link {
@@ -104,18 +114,15 @@
       }
 
       .main-content {
-        max-width: 800px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 40px 20px;
       }
 
       .profile-image {
-        width: 200px;
-        height: 200px;
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
-        margin: 0 auto 30px;
-        display: block;
-        background-color: #ddd;
         overflow: hidden;
       }
 
@@ -132,7 +139,7 @@
 
       .profile-intro h1 {
         font-size: 2.5rem;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
       }
 
       .highlight {
@@ -144,13 +151,14 @@
 
       .profile-details {
         text-align: center;
-        color: #666;
-        margin-bottom: 40px;
+        max-width: 600px;
+        margin: 0 auto 40px;
+        color: var(--subtitle-color);
         font-size: 0.95rem;
       }
 
       .profile-details a {
-        color: #333;
+        color: var(--text-color);
         text-decoration: none;
         font-weight: 500;
       }
@@ -163,9 +171,8 @@
 
       .two-column {
         display: flex;
-        justify-content: space-between;
-        margin-top: 40px;
         gap: 40px;
+        margin: 40px 0;
       }
 
       .column {
@@ -179,63 +186,58 @@
       }
 
       .experience-section {
-        margin-top: 40px;
+        margin-top: 60px;
       }
 
       .filter-buttons {
-        margin-bottom: 20px;
         display: flex;
         flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 30px;
       }
 
       .filter-button {
         background: none;
         border: none;
-        padding: 5px 10px;
-        margin-right: 15px;
-        margin-bottom: 10px;
+        padding: 8px 16px;
+        color: var(--text-color);
         cursor: pointer;
-        color: #666;
         font-size: 0.9rem;
         display: flex;
         align-items: center;
-        position: relative;
-      }
-
-      .filter-indicator {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        margin-left: 8px;
+        gap: 8px;
+        transition: opacity 0.2s;
       }
 
       .filter-button:hover {
-        color: #ffffff;
+        opacity: 0.8;
       }
 
       .filter-button.active {
         font-weight: 500;
-        color: #ffffff;
+      }
+
+      .filter-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
       }
 
       .experience-cards {
         display: grid;
         gap: 20px;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       }
 
       .experience-card {
         background-color: var(--card-background);
         border-radius: 10px;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s;
       }
 
       .experience-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
       }
 
       .card-header {
@@ -244,10 +246,10 @@
 
       .card-title {
         font-size: 1.3rem;
-        font-weight: 600;
-        margin-bottom: 5px;
+        margin-bottom: 10px;
         display: flex;
         align-items: center;
+        gap: 8px;
       }
 
       .status-indicator {
@@ -261,6 +263,7 @@
       .card-subtitle {
         color: var(--subtitle-color);
         font-size: 0.9rem;
+        margin-bottom: 15px;
       }
 
       .card-content {
@@ -270,51 +273,46 @@
       .tag-list {
         display: flex;
         flex-wrap: wrap;
-        margin-top: 15px;
+        gap: 8px;
+        margin: 15px 0;
       }
 
       .tag {
         background-color: var(--tag-background);
+        color: var(--text-color);
         padding: 4px 8px;
         border-radius: 4px;
-        margin-right: 6px;
-        margin-bottom: 6px;
         font-size: 0.8rem;
-        color: var(--text-color);
       }
 
       .card-buttons {
+        display: flex;
+        gap: 10px;
         margin-top: 15px;
       }
 
       .card-button {
-        display: block;
+        flex: 1;
         text-align: center;
-        padding: 10px;
+        padding: 8px 16px;
         border-radius: 6px;
-        margin-bottom: 10px;
+        text-decoration: none;
         font-weight: 500;
-        transition: background-color 0.2s;
+        transition: opacity 0.2s;
+      }
+
+      .card-button:hover {
+        opacity: 0.8;
       }
 
       .dark-button {
-        background-color: #333;
-        color: white;
-      }
-
-      .dark-button:hover {
-        background-color: #444;
-        text-decoration: none;
+        background-color: var(--text-color);
+        color: var(--background-color);
       }
 
       .light-button {
-        background-color: #f0d0ff;
-        color: #333;
-      }
-
-      .light-button:hover {
-        background-color: #f5deff;
-        text-decoration: none;
+        background-color: var(--tag-background);
+        color: var(--text-color);
       }
 
       #canvas-container {
@@ -353,14 +351,102 @@
         display: none;
       }
 
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .main-content {
+          padding: 30px 20px;
+        }
+
+        .profile-intro h1 {
+          font-size: 2.2rem;
+        }
+
+        .experience-cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
       @media (max-width: 768px) {
+        .announcement-bar {
+          font-size: 0.8rem;
+          padding: 8px 15px;
+        }
+
+        nav {
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+        }
+
+        .nav-section {
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .profile-3d-container {
+          width: 150px;
+          height: 150px;
+        }
+
+        .profile-intro h1 {
+          font-size: 2rem;
+        }
+
         .two-column {
+          flex-direction: column;
+          gap: 30px;
+        }
+
+        .experience-cards {
+          grid-template-columns: 1fr;
+        }
+
+        .card-buttons {
           flex-direction: column;
         }
 
-        .profile-image {
-          width: 150px;
-          height: 150px;
+        .filter-buttons {
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .announcement-bar {
+          font-size: 0.75rem;
+          padding: 6px 10px;
+        }
+
+        nav {
+          padding: 10px 15px;
+        }
+
+        .nav-section {
+          gap: 5px;
+        }
+
+        .nav-section a {
+          font-size: 0.9rem;
+        }
+
+        .profile-intro h1 {
+          font-size: 1.8rem;
+        }
+
+        .profile-details {
+          font-size: 0.9rem;
+        }
+
+        .experience-card {
+          padding: 15px;
+        }
+
+        .card-title {
+          font-size: 1.2rem;
+        }
+
+        .filter-button {
+          padding: 6px 12px;
+          font-size: 0.85rem;
         }
       }
 
