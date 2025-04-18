@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Cube Formation Animation with Mouse Tilt</title>
+    <title>3D Cube Formation Animation with Three.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
       * {
         margin: 0;
@@ -11,107 +12,118 @@
         box-sizing: border-box;
       }
 
+      :root {
+        --bg-color: #0a0a2a;
+        --text-color: white;
+        --button-bg: #4444ff;
+        --button-hover: #5555ff;
+        --info-bg: rgba(0, 0, 0, 0.5);
+      }
+
+      [data-theme="light"] {
+        --bg-color: #f0f0f5;
+        --text-color: #333;
+        --button-bg: #4444ff;
+        --button-hover: #5555ff;
+        --info-bg: rgba(255, 255, 255, 0.8);
+      }
+
       body {
-        background-color: #0a0a2a;
-        color: white;
+        background-color: var(--bg-color);
+        color: var(--text-color);
         font-family: "Arial", sans-serif;
         height: 300vh;
         overflow-x: hidden;
       }
 
-      .container {
-        height: 100vh;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      #canvas-container {
         position: fixed;
         top: 0;
         left: 0;
-      }
-
-      .scene {
-        perspective: 1000px;
-        width: 400px;
-        height: 400px;
-      }
-
-      .cube-container {
         width: 100%;
-        height: 100%;
-        position: relative;
-        transform-style: preserve-3d;
-        transform: rotateX(-20deg) rotateY(-30deg);
-      }
-      .small-cube {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background: linear-gradient(
-          145deg,
-          rgba(100, 100, 255, 0.7),
-          rgba(50, 50, 200, 0.7)
-        );
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        transform-style: preserve-3d;
-        opacity: 0;
-        transition: opacity 0.3s, transform 0.8s;
-        will-change: transform, opacity; /* GPU optimization */
-      }
-
-      .face {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background-color: rgba(100, 100, 255, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        backface-visibility: visible;
-      }
-
-      .face.front {
-        transform: translateZ(5px);
-      }
-
-      .face.back {
-        transform: translateZ(-5px) rotateY(180deg);
-      }
-
-      .face.right {
-        transform: translateX(5px) rotateY(90deg);
-      }
-
-      .face.left {
-        transform: translateX(-5px) rotateY(-90deg);
-      }
-
-      .face.top {
-        transform: translateY(-5px) rotateX(90deg);
-      }
-
-      .face.bottom {
-        transform: translateY(5px) rotateX(-90deg);
+        height: 100vh;
+        z-index: 1;
       }
 
       .info {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: var(--info-bg);
         padding: 10px;
         border-radius: 5px;
+        z-index: 2;
       }
 
       .controls {
         position: fixed;
         top: 20px;
         right: 20px;
-        background-color: rgba(0, 0, 0, 0.5);
-        padding: 10px;
+        background-color: var(--info-bg);
+        padding: 20px;
         border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        min-width: 250px;
+        z-index: 2;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .control-group label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      .control-group label span {
+        font-size: 14px;
+      }
+
+      .control-group label .value {
+        background: var(--button-bg);
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 5px;
+        background: var(--button-bg);
+        border-radius: 5px;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 15px;
+        height: 15px;
+        background: white;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .control-group.buttons {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      .control-group.buttons button {
+        flex: 1;
+        margin: 0 5px;
       }
 
       button {
-        background-color: #4444ff;
+        background-color: var(--button-bg);
         color: white;
         border: none;
         padding: 5px 10px;
@@ -121,7 +133,7 @@
       }
 
       button:hover {
-        background-color: #5555ff;
+        background-color: var(--button-hover);
       }
 
       h1 {
@@ -131,156 +143,405 @@
         width: 100%;
         text-align: center;
         font-size: 2rem;
-        color: white;
+        color: var(--text-color);
         text-shadow: 0 0 10px rgba(100, 100, 255, 0.7);
+        z-index: 2;
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--info-bg);
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        z-index: 2;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       }
     </style>
   </head>
   <body>
     <h1>Scroll to Build the Cube</h1>
-
-    <div class="container">
-      <div class="scene">
-        <div class="cube-container" id="cubeContainer"></div>
-      </div>
-    </div>
+    <div id="canvas-container"></div>
 
     <div class="info">
       <p>Scroll down to build the cube</p>
-      <p>Small cubes: <span id="cubeCount">0</span>/1000</p>
+      <p>Small cubes: <span id="cubeCount">0</span>/512</p>
       <p>Move mouse to tilt the cube</p>
     </div>
 
     <div class="controls">
-      <button id="resetBtn">Reset</button>
-      <button id="buildBtn">Build Instantly</button>
+      <div class="control-group">
+        <label>
+          <span>Cube Size</span>
+          <span class="value" id="sizeValue">1</span>
+        </label>
+        <input type="range" id="sizeControl" min="0.5" max="2" value="1" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>
+          <span>Position X</span>
+          <span class="value" id="posXValue">0</span>
+        </label>
+        <input type="range" id="posXControl" min="-5" max="5" value="0" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>
+          <span>Position Y</span>
+          <span class="value" id="posYValue">0</span>
+        </label>
+        <input type="range" id="posYControl" min="-5" max="5" value="0" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>
+          <span>Position Z</span>
+          <span class="value" id="posZValue">0</span>
+        </label>
+        <input type="range" id="posZControl" min="-5" max="5" value="0" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>
+          <span>Grid Size</span>
+          <span class="value" id="gridValue">8</span>
+        </label>
+        <input type="range" id="gridControl" min="4" max="12" value="8" step="1">
+      </div>
+      <div class="control-group buttons">
+        <button id="resetBtn">Reset</button>
+        <button id="buildBtn">Build Instantly</button>
+      </div>
+    </div>
+
+    <div class="theme-toggle">
+      <button id="themeToggle">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+          <path d="M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-12c-.28 0-.5-.22-.5-.5V2c0-.28.22-.5.5-.5s.5.22.5.5v2.5c0 .28-.22.5-.5.5zm0 14c-.28 0-.5.22-.5.5V22c0 .28.22.5.5.5s.5-.22.5-.5v-2.5c0-.28-.22-.5-.5-.5zM3.5 12c0 .28-.22.5-.5.5H.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5H3c.28 0 .5.22.5.5zm18 0c0 .28.22.5.5.5h2.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H22c-.28 0-.5.22-.5.5z"/>
+        </svg>
+        <span>Toggle Theme</span>
+      </button>
     </div>
 
     <script>
-      const cubeContainer = document.getElementById("cubeContainer");
-      const cubeCount = document.getElementById("cubeCount");
-      const resetBtn = document.getElementById("resetBtn");
-      const buildBtn = document.getElementById("buildBtn");
+      // Three.js setup
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-      // Define cube dimensions to reach approximately 1000 cubes
-      const gridSize = 10; // 10x10x10 = 1000 potential cubes
-      const smallCubes = [];
-      const maxCubes = gridSize * gridSize * gridSize; // 1000 cubes
-      let currentCubeCount = 0;
-      const positions = [];
-      for (let x = 0; x < gridSize; x++) {
-        for (let y = 0; y < gridSize; y++) {
-          for (let z = 0; z < gridSize; z++) {
-            positions.push({ x, y, z });
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLight.position.set(5, 5, 5);
+      scene.add(directionalLight);
+
+      // Camera position
+      camera.position.z = 15;
+
+      // Cube parameters
+      let gridSize = 8;
+      let cubeSize = 1;
+      let cubes = [];
+      let visible = 0;
+      let isAnimating = false;
+
+      // Animation parameters
+      let animationTime = 0;
+      let isDisassembling = false;
+      const animationDuration = 3000; // 3 seconds for each direction
+      let lastTimestamp = 0;
+
+      // Create cube geometry
+      const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+      // Add edge lines
+      const edgesMaterial = new THREE.LineBasicMaterial({ 
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.3
+      });
+
+      function createCubes() {
+        // Clear existing cubes
+        cubes.forEach(cube => scene.remove(cube));
+        cubes = [];
+
+        const center = (gridSize - 1) / 2;
+        const maxDistance = Math.sqrt(3 * Math.pow(center, 2)); // Maximum possible distance from center
+
+        // Create new cubes
+        for (let x = 0; x < gridSize; x++) {
+          for (let y = 0; y < gridSize; y++) {
+            for (let z = 0; z < gridSize; z++) {
+              // Calculate distance from center (normalized between 0 and 1)
+              const distanceFromCenter = Math.sqrt(
+                Math.pow(x - center, 2) + 
+                Math.pow(y - center, 2) + 
+                Math.pow(z - center, 2)
+              ) / maxDistance;
+
+              // Create material with opacity based on distance
+              const cubeMaterial = new THREE.MeshPhongMaterial({
+                color: 0x4444ff,
+                transparent: true,
+                opacity: 0.1 + (0.4 * (1 - distanceFromCenter)), // More transparent overall
+                shininess: 100,
+                specular: 0x4444ff,
+                emissive: 0x2222aa,
+                emissiveIntensity: 0.2
+              });
+
+              const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+              const edges = new THREE.EdgesGeometry(cubeGeometry);
+              const line = new THREE.LineSegments(edges, edgesMaterial);
+              
+              cube.position.set(
+                (x - center) * cubeSize,
+                (y - center) * cubeSize,
+                (z - center) * cubeSize
+              );
+              line.position.copy(cube.position);
+              
+              cube.visible = false;
+              line.visible = false;
+              
+              scene.add(cube);
+              scene.add(line);
+              cubes.push({ mesh: cube, edges: line });
+            }
           }
         }
       }
-      const cubeSize = 10; // Size of each cube
-      // Create distribution of up to 1000 cubes in a more interesting pattern
-      function createCubes() {
-        const fragment = document.createDocumentFragment(); // Batch DOM updates
-        positions.forEach(({ x, y, z }) => {
-          const smallCube = document.createElement("div");
-          smallCube.className = "small-cube";
 
-          // Calculate position relative to center
-          const posX = (x - (gridSize - 1) / 2) * cubeSize;
-          const posY = (y - (gridSize - 1) / 2) * cubeSize;
-          const posZ = (z - (gridSize - 1) / 2) * cubeSize;
-
-          smallCube.style.transform = `translate3d(${posX}px, ${posY}px, ${posZ}px)`;
-          fragment.appendChild(smallCube);
-
-          smallCubes.push({
-            element: smallCube,
-            x,
-            y,
-            z,
-            posX,
-            posY,
-            posZ,
-            added: false,
-          });
-        });
-        cubeContainer.appendChild(fragment); // Append all cubes at once
-      }
-
-      // Call the function to create cubes
+      // Initialize cubes
       createCubes();
 
-      let visible = 0;
+      // Animation function
+      function animate(timestamp) {
+        requestAnimationFrame(animate);
 
-      window.addEventListener("scroll", () => {
-        const scrollPercentage =
-          window.scrollY / (document.body.scrollHeight - window.innerHeight);
-        const cubesToShow = Math.floor(scrollPercentage * smallCubes.length);
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const deltaTime = timestamp - lastTimestamp;
+        lastTimestamp = timestamp;
 
-        for (let i = 0; i < cubesToShow; i++) {
-          if (i < smallCubes.length) {
-            smallCubes[i].element.style.opacity = 1;
+        if (isAnimating) {
+          animationTime += deltaTime;
+
+          // Create a continuous loop by using modulo
+          const cycleTime = animationTime % (animationDuration * 2);
+          const progress = Math.min(Math.max(cycleTime / animationDuration, 0), 1);
+          const totalCubes = cubes.length;
+          let cubesToShow;
+
+          if (cycleTime >= animationDuration) {
+            // Second half of the cycle (disassembling)
+            const disassembleProgress = (cycleTime - animationDuration) / animationDuration;
+            cubesToShow = Math.floor(totalCubes * (1 - disassembleProgress));
+          } else {
+            // First half of the cycle (assembling)
+            cubesToShow = Math.floor(totalCubes * progress);
           }
+
+          cubes.forEach((cube, index) => {
+            const shouldBeVisible = index > cubesToShow;
+            cube.mesh.visible = shouldBeVisible;
+            cube.edges.visible = shouldBeVisible;
+          });
+
+          visible = cubesToShow;
+          document.getElementById('cubeCount').textContent = visible;
         }
+
+        renderer.render(scene, camera);
+      }
+
+      // Start animation
+      animate(0);
+
+      // Mouse movement for rotation
+      let targetRotationX = 0;
+      let targetRotationY = 0;
+      let currentRotationX = 0;
+      let currentRotationY = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        targetRotationX = (e.clientX - window.innerWidth / 2) / 2;
+        targetRotationY = (e.clientY - window.innerHeight / 2) / 2;
       });
 
-      // Throttle scroll event
-      let scrollTimeout;
-      window.addEventListener("scroll", () => {
-        if (scrollTimeout) return;
-        scrollTimeout = setTimeout(() => {
-          const scrollPercentage =
-            window.scrollY / (document.body.scrollHeight - window.innerHeight);
-          const cubesToShow = Math.floor(scrollPercentage * smallCubes.length);
+      // Update function
+      function update() {
+        // Smooth rotation
+        currentRotationX += (targetRotationX - currentRotationX) * 0.1;
+        currentRotationY += (targetRotationY - currentRotationY) * 0.1;
+        
+        scene.rotation.y = currentRotationX * 0.01;
+        scene.rotation.x = currentRotationY * 0.01;
 
-          // Add new cubes
-          for (let i = visible; i < cubesToShow; i++) {
-            if (i < smallCubes.length) {
-              smallCubes[i].element.style.opacity = 1;
-              smallCubes[i].added = true;
-              visible++;
-            }
-          }
+        requestAnimationFrame(update);
+      }
 
-          // Remove cubes if scrolling back up
-          for (let i = visible - 1; i >= cubesToShow; i--) {
-            if (i >= 0) {
-              smallCubes[i].element.style.opacity = 0;
-              smallCubes[i].added = false;
-              visible--;
-            }
-          }
+      // Start animation and updates
+      animate();
+      update();
 
-          cubeCount.textContent = visible;
-          scrollTimeout = null; // Reset the timeout
-        }, 50); // Adjust delay as needed
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      // Handle mouse movement for tilting
-      document.addEventListener("mousemove", (e) => {
-        const xAxis = (window.innerWidth / 2 - e.clientX) / 25;
-        const yAxis = (window.innerHeight / 2 - e.clientY) / 25;
+      // Scroll handler
+      window.addEventListener('scroll', () => {
+        const scrollPercentage = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+        const cubesToShow = Math.floor(scrollPercentage * cubes.length);
 
-        cubeContainer.style.transform = `rotateY(${xAxis}deg) rotateX(${-yAxis}deg)`;
+        for (let i = 0; i < cubes.length; i++) {
+          cubes[i].mesh.visible = i < cubesToShow;
+          cubes[i].edges.visible = i < cubesToShow;
+        }
+
+        visible = cubesToShow;
+        document.getElementById('cubeCount').textContent = visible;
+      });
+
+      // UI Controls
+      const sizeControl = document.getElementById('sizeControl');
+      const sizeValue = document.getElementById('sizeValue');
+      const posXControl = document.getElementById('posXControl');
+      const posXValue = document.getElementById('posXValue');
+      const posYControl = document.getElementById('posYControl');
+      const posYValue = document.getElementById('posYValue');
+      const posZControl = document.getElementById('posZControl');
+      const posZValue = document.getElementById('posZValue');
+      const gridControl = document.getElementById('gridControl');
+      const gridValue = document.getElementById('gridValue');
+
+      // Size control
+      sizeControl.addEventListener('input', (e) => {
+        const size = parseFloat(e.target.value);
+        sizeValue.textContent = size;
+        cubeSize = size;
+        cubeGeometry.dispose();
+        cubeGeometry = new THREE.BoxGeometry(size, size, size);
+        createCubes();
+      });
+
+      // Position controls
+      posXControl.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        posXValue.textContent = value;
+        scene.position.x = value;
+      });
+
+      posYControl.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        posYValue.textContent = value;
+        scene.position.y = value;
+      });
+
+      posZControl.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        posZValue.textContent = value;
+        scene.position.z = value;
+      });
+
+      // Grid size control
+      gridControl.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        gridValue.textContent = value;
+      });
+
+      gridControl.addEventListener('change', (e) => {
+        gridSize = parseInt(e.target.value);
+        createCubes();
       });
 
       // Reset button
-      resetBtn.addEventListener("click", () => {
-        smallCubes.forEach((cube) => {
-          cube.element.style.opacity = 0;
-          cube.added = false;
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        isAnimating = false;
+        animationButton.textContent = 'Start Animation';
+        animationTime = 0;
+        isDisassembling = false;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        cubes.forEach(cube => {
+          cube.mesh.visible = false;
+          cube.edges.visible = false;
         });
         visible = 0;
-        cubeCount.textContent = visible;
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        document.getElementById('cubeCount').textContent = visible;
+        
+        // Reset controls
+        sizeControl.value = 1;
+        sizeValue.textContent = '1';
+        posXControl.value = 0;
+        posXValue.textContent = '0';
+        posYControl.value = 0;
+        posYValue.textContent = '0';
+        posZControl.value = 0;
+        posZValue.textContent = '0';
+        gridControl.value = 8;
+        gridValue.textContent = '8';
+        
+        // Reset scene
+        scene.position.set(0, 0, 0);
+        scene.rotation.set(0, 0, 0);
+        cubeSize = 1;
+        gridSize = 8;
+        createCubes();
       });
 
       // Build instantly button
-      buildBtn.addEventListener("click", () => {
-        smallCubes.forEach((cube) => {
-          cube.element.style.opacity = 1;
-          cube.added = true;
+      document.getElementById('buildBtn').addEventListener('click', () => {
+        cubes.forEach(cube => {
+          cube.mesh.visible = true;
+          cube.edges.visible = true;
         });
-        visible = smallCubes.length;
-        cubeCount.textContent = visible;
+        visible = cubes.length;
+        document.getElementById('cubeCount').textContent = visible;
+      });
+
+      // Theme toggle
+      const themeToggle = document.getElementById('themeToggle');
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      document.documentElement.setAttribute('data-theme', prefersDarkScheme.matches ? 'dark' : 'light');
+      
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+      });
+
+      // Add animation toggle button
+      const controlsDiv = document.querySelector('.controls');
+      const animationButton = document.createElement('button');
+      animationButton.id = 'animationBtn';
+      animationButton.textContent = 'Start Animation';
+      controlsDiv.querySelector('.control-group.buttons').appendChild(animationButton);
+
+      // Animation toggle handler
+      animationButton.addEventListener('click', () => {
+        isAnimating = !isAnimating;
+        animationButton.textContent = isAnimating ? 'Stop Animation' : 'Start Animation';
+        
+        if (!isAnimating) {
+          // Reset to initial state when stopping
+          animationTime = 0;
+          cubes.forEach(cube => {
+            cube.mesh.visible = false;
+            cube.edges.visible = false;
+          });
+          visible = 0;
+          document.getElementById('cubeCount').textContent = visible;
+        }
       });
     </script>
   </body>
