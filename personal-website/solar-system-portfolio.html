@@ -685,123 +685,11 @@
       const starField = new THREE.LineSegments(starsGeometry, starsMaterial);
       scene.add(starField);
 
-      // Create Sun
-      const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-      const sunMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffcc33,
-        transparent: true,
-        opacity: 0.9,
-      });
-      const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-      sun.position.set(0, 0, -50);
-      // scene.add(sun);
-
-      // Create a PointLight to simulate the sun emitting light
-      const sunLight2 = new THREE.PointLight(0xffcc33, 1.5, 200); // Color, intensity, distance
-      sunLight2.position.copy(sun.position); // Position the light at the sun's location
-      // scene.add(sunLight2);
-
-      // Create sun glow
-      const sunGlowGeometry = new THREE.SphereGeometry(6, 32, 32);
-      const sunGlowMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffcc33,
-        transparent: true,
-        opacity: 0.3,
-      });
-      const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
-      // sun.add(sunGlow);
-
-      // Create planets
-      const planets = [];
-      const planetColors = [
-        0xa5a5a5, // Mercury - gray
-        0xe5c17a, // Venus - tan
-        0x3498db, // Earth - blue
-        0xc0392b, // Mars - red
-        0xf39c12, // Jupiter - orange
-        0xf1c40f, // Saturn - yellow
-        0x85c1e9, // Uranus - light blue
-        0x3498db, // Neptune - dark blue
-      ];
-
-      const planetSizes = [0.8, 1.5, 1.6, 1.2, 3.5, 3, 2.5, 2.4];
-      const planetDistances = [12, 18, 25, 33, 45, 58, 70, 85];
-      const planetOrbitalSpeeds = [
-        0.01, 0.0075, 0.006, 0.005, 0.003, 0.002, 0.0015, 0.001,
-      ];
-
-      for (let i = 0; i < 8; i++) {
-        const planetGeometry = new THREE.SphereGeometry(planetSizes[i], 32, 32);
-        const planetMaterial = new THREE.MeshBasicMaterial({
-          color: planetColors[i],
-          transparent: true,
-          opacity: 0.9,
-        });
-
-        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
-
-        // Create orbit ring
-        const orbitGeometry = new THREE.RingGeometry(
-          planetDistances[i] - 0.1,
-          planetDistances[i] + 0.1,
-          64
-        );
-        const orbitMaterial = new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.1,
-        });
-        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-        orbit.rotation.x = Math.PI / 2;
-        orbit.position.copy(sun.position);
-        // scene.add(orbit);
-
-        // Set initial planet position
-        const angle = Math.random() * Math.PI * 2;
-        planet.position.x =
-          Math.cos(angle) * planetDistances[i] + sun.position.x;
-        planet.position.z =
-          Math.sin(angle) * planetDistances[i] + sun.position.z;
-        planet.position.y = sun.position.y;
-
-        // scene.add(planet);
-
-        // Store planet info for animation
-        planets.push({
-          mesh: planet,
-          distance: planetDistances[i],
-          speed: planetOrbitalSpeeds[i],
-          angle: angle,
-        });
-
-        // Add Saturn's rings to the 6th planet (index 5)
-        if (i === 5) {
-          const ringGeometry = new THREE.RingGeometry(4, 6, 32);
-          const ringMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdaa520,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.8,
-          });
-          const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-          ring.rotation.x = Math.PI / 2;
-          planet.add(ring);
-        }
-      }
-
-      // Add ambient light
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-      // scene.add(ambientLight);
-
-      // Add a point light at the sun's position
-      const sunLight = new THREE.PointLight(0xffffff, 1, 100);
-      sunLight.position.copy(sun.position);
-      // scene.add(sunLight);   
-
       // Position camera
       camera.position.set(0, 100, 0);
-      camera.lookAt(sun.position);
+      // 0, 0, -50
+      var pos = new THREE.Vector3(0, 0, -50);
+      camera.lookAt(pos);
 
       // Add mouse movement effect
       let mouseX = 0;
@@ -816,27 +704,13 @@
       function animate() {
         requestAnimationFrame(animate);
 
-        // Rotate sun
-        sun.rotation.y += 0.001;
 
         // Update camera position based on mouse movement (subtle)
         camera.position.x += (mouseX * 5 - camera.position.x) * 0.01;
         camera.position.y += (-mouseY * 5 - camera.position.y) * 0.01;
-        camera.lookAt(sun.position);
+        camera.lookAt(pos);
 
-        // Animate planets orbiting around the sun
-        planets.forEach((planet) => {
-          planet.angle += planet.speed;
-          planet.mesh.position.x =
-            Math.cos(planet.angle) * planet.distance + sun.position.x;
-          planet.mesh.position.z =
-            Math.sin(planet.angle) * planet.distance + sun.position.z;
-          planet.mesh.rotation.y += planet.speed * 5;
-        });
 
-        // Pulse the sun glow
-        const pulseFactor = 1 + Math.sin(Date.now() * 0.001) * 0.1;
-        sunGlow.scale.set(pulseFactor, pulseFactor, pulseFactor);
 
         // Light-speed starfield effect with lines
         const positions = starsGeometry.attributes.position.array;
