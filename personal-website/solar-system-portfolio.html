@@ -14,15 +14,37 @@
           sans-serif;
       }
 
+      /* Theme variables */
+      :root {
+        --background-color: #282727;
+        --text-color: #ffffff;
+        --card-background: #0d0808;
+        --nav-background: #0d0808;
+        --tag-background: #444444;
+        --subtitle-color: #cccccc;
+        --separator-color: #aaaaaa;
+      }
+
+      /* Light theme variables */
+      [data-theme="light"] {
+        --background-color: #ffffff;
+        --text-color: #333333;
+        --card-background: #f8f8f8;
+        --nav-background: #ffffff;
+        --tag-background: #f0f0f0;
+        --subtitle-color: #666666;
+        --separator-color: #999999;
+      }
+
       body {
-        background-color: #282727;
-        color: #333;
+        background-color: var(--background-color);
+        color: var(--text-color);
         line-height: 1.6;
         overflow-x: hidden;
       }
 
       a {
-        color: #333;
+        color: #5fff7a;
         text-decoration: none;
       }
 
@@ -44,8 +66,8 @@
       }
 
       .nav-container {
-        border-bottom: 1px solid #e1e1e1;
-        background-color: #0d0808;
+        border-bottom: 1px solid rgba(225, 225, 225, 0.1);
+        background-color: var(--nav-background);
       }
 
       nav {
@@ -64,11 +86,11 @@
 
       .nav-section a {
         margin: 0 10px;
-        color: #666;
+        color: var(--text-color);
       }
 
       .nav-section span {
-        color: #999;
+        color: var(--separator-color);
         margin: 0 5px;
       }
 
@@ -204,7 +226,7 @@
       }
 
       .experience-card {
-        background-color: #0d0808;
+        background-color: var(--card-background);
         border-radius: 10px;
         padding: 20px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -237,7 +259,7 @@
       }
 
       .card-subtitle {
-        color: #888;
+        color: var(--subtitle-color);
         font-size: 0.9rem;
       }
 
@@ -252,13 +274,13 @@
       }
 
       .tag {
-        background-color: #f5f5f5;
+        background-color: var(--tag-background);
         padding: 4px 8px;
         border-radius: 4px;
         margin-right: 6px;
         margin-bottom: 6px;
         font-size: 0.8rem;
-        color: #666;
+        color: var(--text-color);
       }
 
       .card-buttons {
@@ -342,54 +364,21 @@
         }
       }
 
-      body {
-        background-color: #282727;
-        color: #ffffff; /* Change text color to white for better contrast */
-        line-height: 1.6;
-        overflow-x: hidden;
+      /* Theme toggle button styles */
+      .theme-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px 10px;
+        font-size: 1.2rem;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 5px;
       }
 
-      a {
-        color: #5fff7a; /* Use a bright green for links to make them stand out */
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .nav-section a {
-        color: #ffffff; /* Make navigation links white */
-      }
-
-      .nav-section span {
-        color: #aaaaaa; /* Use a lighter gray for separators */
-      }
-
-      .profile-details {
-        text-align: center;
-        color: #dddddd; /* Light gray for better contrast */
-      }
-
-      .filter-button {
-        color: #ffffff; /* Make filter button text white */
-      }
-
-      .filter-button:hover {
-        color: #5fff7a; /* Bright green on hover */
-      }
-
-      .card-title {
-        color: #ffffff; /* Make card titles white */
-      }
-
-      .card-subtitle {
-        color: #cccccc; /* Light gray for subtitles */
-      }
-
-      .tag {
-        background-color: #444444; /* Darker background for tags */
-        color: #ffffff; /* White text for tags */
+      .theme-toggle:hover {
+        opacity: 0.8;
       }
     </style>
   </head>
@@ -417,6 +406,10 @@
           <a href="#">Articles</a>
           <span>/</span>
           <a href="#">Series</a>
+          <button class="theme-toggle" id="themeToggle">
+            <span class="theme-icon">🌙</span>
+            <span class="theme-text">Dark</span>
+          </button>
         </div>
       </nav>
     </div>
@@ -632,70 +625,100 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-      // Three.js setup for Solar System
-      const canvas = document.getElementById("canvas-container");
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
-      const renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-      });
+      // Theme switching functionality
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = themeToggle.querySelector('.theme-icon');
+      const themeText = themeToggle.querySelector('.theme-text');
 
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(0x000011, 1);
-      canvas.appendChild(renderer.domElement);
+      // Check for saved theme preference or default to dark
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeButton(savedTheme);
 
-      // Create a starfield with lines
-      const starsGeometry = new THREE.BufferGeometry();
-      const starCount = 10000; // Number of stars
-      const starsPositions = new Float32Array(starCount * 6); // Each line needs 2 points (start and end)
+      // Three.js variables
+      let scene, camera, renderer, starField, starsMaterial;
+      const starCount = 10000;
 
-      for (let i = 0; i < starCount * 6; i += 6) {
-        const x = (Math.random() - 0.5) * 2000; // Random x position
-        const y = (Math.random() - 0.5) * 2000; // Random y position
-        const z = (Math.random() - 0.5) * 2000; // Random z position
+      // Initialize Three.js scene
+      function initThreeJS() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true
+        });
 
-        // Start point of the line
-        starsPositions[i] = x;
-        starsPositions[i + 1] = y;
-        starsPositions[i + 2] = z;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // End point of the line (slightly closer to the camera)
-        starsPositions[i + 3] = x;
-        starsPositions[i + 4] = y;
-        starsPositions[i + 5] = z + 50; // Length of the line
+        // Create starfield
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsPositions = new Float32Array(starCount * 6);
+
+        for (let i = 0; i < starCount * 6; i += 6) {
+          const x = (Math.random() - 0.5) * 2000;
+          const y = (Math.random() - 0.5) * 2000;
+          const z = (Math.random() - 0.5) * 2000;
+
+          starsPositions[i] = x;
+          starsPositions[i + 1] = y;
+          starsPositions[i + 2] = z;
+
+          starsPositions[i + 3] = x;
+          starsPositions[i + 4] = y;
+          starsPositions[i + 5] = z + 50;
+        }
+
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
+        starsMaterial = new THREE.LineBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.8
+        });
+
+        starField = new THREE.LineSegments(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // Position camera
+        camera.position.set(0, 100, 0);
+        camera.lookAt(new THREE.Vector3(0, 0, -50));
       }
 
-      starsGeometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(starsPositions, 3)
-      );
+      // Function to update star colors based on theme
+      function updateStarColors(theme) {
+        if (!starsMaterial) return;
+        
+        if (theme === 'light') {
+          starsMaterial.color.setHex(0x000011);
+          starsMaterial.opacity = 1;
+          renderer.setClearColor(0xffffff, 1);
+        } else {
+          starsMaterial.color.setHex(0xffffff);
+          starsMaterial.opacity = 1;
+          renderer.setClearColor(0x000011, 1);
+        }
+      }
 
-      const starsMaterial = new THREE.LineBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.8,
+      // Theme toggle event listener
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeButton(newTheme);
+        updateStarColors(newTheme);
       });
 
-      const starField = new THREE.LineSegments(starsGeometry, starsMaterial);
-      scene.add(starField);
+      function updateThemeButton(theme) {
+        themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
+        themeText.textContent = theme === 'dark' ? 'Dark' : 'Light';
+      }
 
-      // Position camera
-      camera.position.set(0, 100, 0);
-      // 0, 0, -50
-      var pos = new THREE.Vector3(0, 0, -50);
-      camera.lookAt(pos);
-
-      // Add mouse movement effect
+      // Mouse movement effect
       let mouseX = 0;
       let mouseY = 0;
-
-      document.addEventListener("mousemove", (event) => {
+      document.addEventListener('mousemove', (event) => {
         mouseX = (event.clientX / window.innerWidth) * 2 - 1;
         mouseY = (event.clientY / window.innerHeight) * 2 - 1;
       });
@@ -704,51 +727,50 @@
       function animate() {
         requestAnimationFrame(animate);
 
+        if (camera && starField) {
+          // Update camera position based on mouse movement
+          camera.position.x += (mouseX * 5 - camera.position.x) * 0.01;
+          camera.position.y += (-mouseY * 5 - camera.position.y) * 0.01;
+          camera.lookAt(new THREE.Vector3(0, 0, -50));
 
-        // Update camera position based on mouse movement (subtle)
-        camera.position.x += (mouseX * 5 - camera.position.x) * 0.01;
-        camera.position.y += (-mouseY * 5 - camera.position.y) * 0.01;
-        camera.lookAt(pos);
+          // Update starfield
+          const positions = starField.geometry.attributes.position.array;
+          for (let i = 0; i < positions.length; i += 6) {
+            positions[i + 2] += 50;
+            positions[i + 5] += 50;
 
+            if (positions[i + 2] > 1000) {
+              const x = (Math.random() - 0.5) * 2000;
+              const y = (Math.random() - 0.5) * 2000;
+              const z = -1000;
 
+              positions[i] = x;
+              positions[i + 1] = y;
+              positions[i + 2] = z;
 
-        // Light-speed starfield effect with lines
-        const positions = starsGeometry.attributes.position.array;
-        for (let i = 0; i < positions.length; i += 6) {
-          // Move both start and end points of the line
-          positions[i + 2] += 50; // Start point z
-          positions[i + 5] += 50; // End point z
-
-          if (positions[i + 2] > 1000) {
-            // Reset line to far position when it moves past the camera
-            const x = (Math.random() - 0.5) * 2000;
-            const y = (Math.random() - 0.5) * 2000;
-            const z = -1000;
-
-            // Reset start point
-            positions[i] = x;
-            positions[i + 1] = y;
-            positions[i + 2] = z;
-
-            // Reset end point
-            positions[i + 3] = x;
-            positions[i + 4] = y;
-            positions[i + 5] = z + 50; // Length of the line
+              positions[i + 3] = x;
+              positions[i + 4] = y;
+              positions[i + 5] = z + 50;
+            }
           }
+          starField.geometry.attributes.position.needsUpdate = true;
         }
-        starsGeometry.attributes.position.needsUpdate = true;
 
         renderer.render(scene, camera);
       }
 
       // Handle window resize
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+      window.addEventListener('resize', () => {
+        if (camera && renderer) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
       });
 
-      // Start animation
+      // Initialize everything
+      initThreeJS();
+      updateStarColors(savedTheme);
       animate();
 
       // Filter functionality
