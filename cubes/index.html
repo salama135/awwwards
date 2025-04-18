@@ -233,12 +233,74 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+      // Initialize particles array
+      const particles = [];
+      const particleCount = 200;
+      const particleGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+      const particleMaterial = new THREE.MeshPhongMaterial({
+        color: 0x4444ff,
+        transparent: true,
+        opacity: 0.3,
+        shininess: 100,
+        specular: 0x4444ff,
+        emissive: 0x2222aa,
+        emissiveIntensity: 0.2
+      });
+
+      // Create particles
+      for (let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial.clone());
+        
+        // Random position in a larger space
+        particle.position.set(
+          (Math.random() - 0.5) * 30,
+          (Math.random() - 0.5) * 30,
+          (Math.random() - 0.5) * 30
+        );
+        
+        // Random rotation speed
+        particle.rotationSpeed = {
+          x: (Math.random() - 0.5) * 0.02,
+          y: (Math.random() - 0.5) * 0.02,
+          z: (Math.random() - 0.5) * 0.02
+        };
+        
+        // Random movement speed
+        particle.movementSpeed = {
+          x: (Math.random() - 0.5) * 0.01,
+          y: (Math.random() - 0.5) * 0.01,
+          z: (Math.random() - 0.5) * 0.01
+        };
+        
+        scene.add(particle);
+        particles.push(particle);
+      }
+
       // Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
       scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+
+      // Main directional light
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
       directionalLight.position.set(5, 5, 5);
       scene.add(directionalLight);
+
+      // Additional lights for better coverage
+      const backLight = new THREE.DirectionalLight(0x4444ff, 0.5);
+      backLight.position.set(-5, -5, -5);
+      scene.add(backLight);
+
+      const sideLight1 = new THREE.PointLight(0x4444ff, 0.5);
+      sideLight1.position.set(10, 0, 0);
+      scene.add(sideLight1);
+
+      const sideLight2 = new THREE.PointLight(0x4444ff, 0.5);
+      sideLight2.position.set(-10, 0, 0);
+      scene.add(sideLight2);
+
+      // Add a subtle blue glow to the scene
+      const hemisphereLight = new THREE.HemisphereLight(0x4444ff, 0xffffff, 0.3);
+      scene.add(hemisphereLight);
 
       // Camera position
       camera.position.z = 15;
@@ -274,6 +336,9 @@
         const center = (gridSize - 1) / 2;
         const maxDistance = Math.sqrt(3 * Math.pow(center, 2)); // Maximum possible distance from center
 
+        // Create array to store cubes with their distance from center
+        const cubeData = [];
+
         // Create new cubes
         for (let x = 0; x < gridSize; x++) {
           for (let y = 0; y < gridSize; y++) {
@@ -289,7 +354,7 @@
               const cubeMaterial = new THREE.MeshPhongMaterial({
                 color: 0x4444ff,
                 transparent: true,
-                opacity: 0.1 + (0.4 * (1 - distanceFromCenter)), // More transparent overall
+                opacity: 0.1 + (0.4 * (1 - distanceFromCenter)),
                 shininess: 100,
                 specular: 0x4444ff,
                 emissive: 0x2222aa,
@@ -312,10 +377,25 @@
               
               scene.add(cube);
               scene.add(line);
-              cubes.push({ mesh: cube, edges: line });
+              
+              // Store cube data with its distance from center
+              cubeData.push({
+                mesh: cube,
+                edges: line,
+                distance: distanceFromCenter
+              });
             }
           }
         }
+
+        // Sort cubes by distance from center (closest first)
+        cubeData.sort((a, b) => a.distance - b.distance);
+        
+        // Store sorted cubes
+        cubes = cubeData.map(data => ({
+          mesh: data.mesh,
+          edges: data.edges
+        }));
       }
 
       // Initialize cubes
@@ -328,6 +408,27 @@
         if (!lastTimestamp) lastTimestamp = timestamp;
         const deltaTime = timestamp - lastTimestamp;
         lastTimestamp = timestamp;
+
+        // Animate particles
+        particles.forEach(particle => {
+          // Rotate particles
+          particle.rotation.x += particle.rotationSpeed.x;
+          particle.rotation.y += particle.rotationSpeed.y;
+          particle.rotation.z += particle.rotationSpeed.z;
+          
+          // Move particles
+          particle.position.x += particle.movementSpeed.x;
+          particle.position.y += particle.movementSpeed.y;
+          particle.position.z += particle.movementSpeed.z;
+          
+          // Wrap particles around when they go too far
+          const wrapDistance = 15;
+          ['x', 'y', 'z'].forEach(axis => {
+            if (Math.abs(particle.position[axis]) > wrapDistance) {
+              particle.position[axis] *= -0.9;
+            }
+          });
+        });
 
         if (isAnimating) {
           animationTime += deltaTime;
@@ -348,7 +449,7 @@
           }
 
           cubes.forEach((cube, index) => {
-            const shouldBeVisible = index > cubesToShow;
+            const shouldBeVisible = index < cubesToShow;
             cube.mesh.visible = shouldBeVisible;
             cube.edges.visible = shouldBeVisible;
           });
