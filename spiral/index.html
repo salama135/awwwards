@@ -10,6 +10,7 @@
             margin: 0;
             overflow: hidden;
             background: #000;
+            font-family: Arial, sans-serif;
         }
         canvas {
             display: block;
@@ -45,10 +46,115 @@
         .theme-btn.active {
             outline: 3px solid white;
         }
+        #controlPanel {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            width: 300px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: #fff;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .slider-container label {
+            width: 120px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+            height: 5px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .value-display {
+            width: 40px;
+            font-size: 12px;
+            color: #fff;
+            text-align: right;
+        }
     </style>
 </head>
 
 <body>
+    <div id="controlPanel">
+        <div class="control-group">
+            <h3>Bloom Controls</h3>
+            <div class="slider-container">
+                <label>Strength</label>
+                <input type="range" id="bloomStrength" min="0" max="3" step="0.1" value="0.5">
+                <span class="value-display">0.5</span>
+            </div>
+            <div class="slider-container">
+                <label>Radius</label>
+                <input type="range" id="bloomRadius" min="0" max="2" step="0.1" value="0.6">
+                <span class="value-display">0.6</span>
+            </div>
+            <div class="slider-container">
+                <label>Threshold</label>
+                <input type="range" id="bloomThreshold" min="0" max="1" step="0.1" value="0.1">
+                <span class="value-display">0.1</span>
+            </div>
+        </div>
+        <div class="control-group">
+            <h3>Line Controls</h3>
+            <div class="slider-container">
+                <label>Base Thickness</label>
+                <input type="range" id="baseThickness" min="0.1" max="1.0" step="0.1" value="0.3">
+                <span class="value-display">0.3</span>
+            </div>
+            <div class="slider-container">
+                <label>Thickness Variation</label>
+                <input type="range" id="thicknessVariation" min="0" max="1" step="0.1" value="0.3">
+                <span class="value-display">0.3</span>
+            </div>
+            <div class="slider-container">
+                <label>Number of Lines</label>
+                <input type="range" id="numLines" min="10" max="50" step="1" value="30">
+                <span class="value-display">30</span>
+            </div>
+        </div>
+        <div class="control-group">
+            <h3>Animation Controls</h3>
+            <div class="slider-container">
+                <label>Rotation Speed</label>
+                <input type="range" id="rotationSpeed" min="0" max="0.01" step="0.001" value="0.005">
+                <span class="value-display">0.005</span>
+            </div>
+        </div>
+    </div>
+
     <div id="themeControls">
         <button class="theme-btn active" data-theme="original" style="background: linear-gradient(45deg, #6b1b47, #44aa99, #ffbe0b)">Original</button>
         <button class="theme-btn" data-theme="neon" style="background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00aa)">Neon</button>
@@ -154,6 +260,65 @@
             return new THREE.CatmullRomCurve3(points);
         }
 
+        // Global controls object
+        const controls = {
+            bloomStrength: 0.5,
+            bloomRadius: 0.6,
+            bloomThreshold: 0.1,
+            baseThickness: 0.3,
+            thicknessVariation: 0.3,
+            numLines: 30,
+            rotationSpeed: 0.005
+        };
+
+        // Setup control panel listeners
+        function setupControlListeners() {
+            const updateValue = (elementId, value) => {
+                document.querySelector(`#${elementId}`).nextElementSibling.textContent = value;
+            };
+
+            document.querySelector('#bloomStrength').addEventListener('input', (e) => {
+                controls.bloomStrength = parseFloat(e.target.value);
+                bloomPass.strength = controls.bloomStrength;
+                updateValue('bloomStrength', e.target.value);
+            });
+
+            document.querySelector('#bloomRadius').addEventListener('input', (e) => {
+                controls.bloomRadius = parseFloat(e.target.value);
+                bloomPass.radius = controls.bloomRadius;
+                updateValue('bloomRadius', e.target.value);
+            });
+
+            document.querySelector('#bloomThreshold').addEventListener('input', (e) => {
+                controls.bloomThreshold = parseFloat(e.target.value);
+                bloomPass.threshold = controls.bloomThreshold;
+                updateValue('bloomThreshold', e.target.value);
+            });
+
+            document.querySelector('#baseThickness').addEventListener('input', (e) => {
+                controls.baseThickness = parseFloat(e.target.value);
+                createSpirals(themes[currentTheme]);
+                updateValue('baseThickness', e.target.value);
+            });
+
+            document.querySelector('#thicknessVariation').addEventListener('input', (e) => {
+                controls.thicknessVariation = parseFloat(e.target.value);
+                createSpirals(themes[currentTheme]);
+                updateValue('thicknessVariation', e.target.value);
+            });
+
+            document.querySelector('#numLines').addEventListener('input', (e) => {
+                controls.numLines = parseInt(e.target.value);
+                createSpirals(themes[currentTheme]);
+                updateValue('numLines', e.target.value);
+            });
+
+            document.querySelector('#rotationSpeed').addEventListener('input', (e) => {
+                controls.rotationSpeed = parseFloat(e.target.value);
+                updateValue('rotationSpeed', e.target.value);
+            });
+        }
+
         function createSpirals(themeColors) {
             // Clear existing spirals
             brushStrokes.forEach(stroke => scene.remove(stroke));
@@ -163,7 +328,9 @@
                 new THREE.Color(color).multiplyScalar(3)
             );
 
-            const numStrokes = 30;
+            const numStrokes = controls.numLines;
+            const baseOffsetAmount = controls.baseThickness;
+            const variationAmount = controls.thicknessVariation;
 
             for(let i = 0; i < numStrokes; i++) {
                 const startRadius = Math.random() * 3;
@@ -186,15 +353,28 @@
                 
                 const mainLine = new THREE.Line(mainGeometry, mainMaterial);
                 
-                const numOffsetLines = 16;
-                const offsetAmount = 0.3;
+                // Create multiple offset lines with varying thickness
+                const baseNumOffsetLines = 16;
+                // Vary the number of offset lines for each spiral
+                const numOffsetLines = baseNumOffsetLines + Math.floor(Math.random() * 8);
                 
                 for(let j = 0; j < numOffsetLines; j++) {
-                    const offsetPoints = points.map(p => {
+                    // Create thickness variation along the spiral
+                    const offsetPoints = points.map((p, idx) => {
+                        const t = idx / points.length; // Position along the spiral
+                        
+                        // Create various thickness modulations
+                        const pulseEffect = Math.sin(t * Math.PI * 8) * 0.3; // Fast thickness variation
+                        const growEffect = t * 0.5; // Gradually thicker
+                        const breatheEffect = Math.sin(t * Math.PI * 2) * 0.2; // Slow thickness variation
+                        
+                        // Combine different effects for organic feeling
+                        const dynamicOffset = baseOffsetAmount * (1 + pulseEffect + growEffect + breatheEffect);
+                        
                         const angle = (j / numOffsetLines) * Math.PI * 2;
                         return new THREE.Vector3(
-                            p.x + Math.cos(angle) * offsetAmount,
-                            p.y + Math.sin(angle) * offsetAmount,
+                            p.x + Math.cos(angle) * dynamicOffset,
+                            p.y + Math.sin(angle) * dynamicOffset,
                             p.z
                         );
                     });
@@ -203,20 +383,25 @@
                     const offsetMaterial = new THREE.LineBasicMaterial({ 
                         color: palette[i % palette.length],
                         transparent: true,
-                        opacity: 0.25,
+                        opacity: 0.25 * (1 + Math.sin(j / numOffsetLines * Math.PI)), // Varying opacity
                         blending: THREE.AdditiveBlending
                     });
                     
                     const offsetLine = new THREE.Line(offsetGeometry, offsetMaterial);
                     mainLine.add(offsetLine);
 
+                    // Add intermediate lines with varying thickness
                     if (j % 2 === 0) {
-                        const innerOffset = offsetAmount * 0.5;
-                        const innerPoints = points.map(p => {
+                        const innerOffset = baseOffsetAmount * 0.5 * (1 + Math.sin(j * Math.PI / numOffsetLines));
+                        const innerPoints = points.map((p, idx) => {
+                            const t = idx / points.length;
+                            const variation = Math.sin(t * Math.PI * 4) * 0.3; // Different frequency variation
+                            const dynamicInnerOffset = innerOffset * (1 + variation);
+                            
                             const angle = (j / numOffsetLines) * Math.PI * 2;
                             return new THREE.Vector3(
-                                p.x + Math.cos(angle) * innerOffset,
-                                p.y + Math.sin(angle) * innerOffset,
+                                p.x + Math.cos(angle) * dynamicInnerOffset,
+                                p.y + Math.sin(angle) * dynamicInnerOffset,
                                 p.z
                             );
                         });
@@ -225,7 +410,7 @@
                         const innerMaterial = new THREE.LineBasicMaterial({ 
                             color: palette[i % palette.length],
                             transparent: true,
-                            opacity: 0.35,
+                            opacity: 0.35 * (1 + Math.cos(j / numOffsetLines * Math.PI * 0.5)), // Different opacity variation
                             blending: THREE.AdditiveBlending
                         });
                         
@@ -257,13 +442,14 @@
             });
         });
 
+        // Modify animation function to use rotation speed from controls
         function animate() {
             requestAnimationFrame(animate);
             
             brushStrokes.forEach((stroke, index) => {
-                stroke.rotation.z += 0.001 * (index % 2 ? 1 : -1);
-                stroke.rotation.y += 0.005 * (index % 2 ? 1 : 1);
-                stroke.rotation.x += 0.005 * (index % 2 ? 1 : 1);
+                stroke.rotation.z += controls.rotationSpeed * (index % 2 ? 1 : -1);
+                stroke.rotation.y += controls.rotationSpeed * (index % 2 ? 1 : 1);
+                stroke.rotation.x += controls.rotationSpeed * (index % 2 ? 1 : 1);
             });
             
             composer.render();
@@ -276,6 +462,9 @@
             composer.setSize(window.innerWidth, window.innerHeight);
             bloomPass.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // Initialize controls
+        setupControlListeners();
 
         animate();
     </script>
