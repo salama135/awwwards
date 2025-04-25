@@ -150,7 +150,8 @@
             
             brushStrokes.forEach((stroke, index) => {
                 stroke.rotation.z += 0.001 * (index % 2 ? 1 : -1);
-                // stroke.rotation.y += 0.0005 * (index % 3 ? 1 : -1);
+                stroke.rotation.y += 0.005 * (index % 2 ? 1 : 1);
+                stroke.rotation.x += 0.005 * (index % 2 ? 1 : 1);
             });
             
             renderer.render(scene, camera);
