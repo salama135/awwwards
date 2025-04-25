@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brushstroke Spiral Effect</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create multiple spiral curves with different properties
+        function createSpiralCurve(startRadius, endRadius, turns, offset, heightOffset) {
+            const points = [];
+            const segments = 500;
+            
+            for(let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const angle = t * Math.PI * 2 * turns + offset;
+                const radius = startRadius + (endRadius - startRadius) * t;
+                const x = Math.cos(angle) * radius * 1.5;
+                const y = Math.sin(angle) * radius * 1.5;
+                const z = heightOffset + (t - 0.5) * 3;
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            
+            return new THREE.CatmullRomCurve3(points);
+        }
+
+        // Color palette
+        const palette = [
+            new THREE.Color('#6b1b47'), // deep purple
+            new THREE.Color('#44aa99'), // teal
+            new THREE.Color('#ffbe0b'), // yellow
+            new THREE.Color('#ff6b6b'), // coral
+            new THREE.Color('#2ec4b6')  // turquoise
+        ];
+
+        // Create multiple brushstrokes
+        const brushStrokes = [];
+        const numStrokes = 30;
+
+        for(let i = 0; i < numStrokes; i++) {
+            const startRadius = Math.random() * 3;
+            const endRadius = 4.5 + Math.random() * 3;
+            const turns = 2.5 + Math.random() * 1.5;
+            const offset = Math.random() * Math.PI * 2;
+            const heightOffset = (Math.random() - 0.5) * 3;
+            
+            const curve = createSpiralCurve(startRadius, endRadius, turns, offset, heightOffset);
+            const points = curve.getPoints(500);
+
+            // Create main thick line
+            const mainGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const mainMaterial = new THREE.LineBasicMaterial({ 
+                color: palette[i % palette.length],
+                linewidth: 5,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const mainLine = new THREE.Line(mainGeometry, mainMaterial);
+            
+            // Create multiple offset lines for thickness effect
+            const numOffsetLines = 16;
+            const offsetAmount = 0.3;
+            
+            // Create concentric rings of offset lines
+            for(let j = 0; j < numOffsetLines; j++) {
+                const offsetPoints = points.map(p => {
+                    const angle = (j / numOffsetLines) * Math.PI * 2;
+                    return new THREE.Vector3(
+                        p.x + Math.cos(angle) * offsetAmount,
+                        p.y + Math.sin(angle) * offsetAmount,
+                        p.z
+                    );
+                });
+                
+                const offsetGeometry = new THREE.BufferGeometry().setFromPoints(offsetPoints);
+                const offsetMaterial = new THREE.LineBasicMaterial({ 
+                    color: palette[i % palette.length],
+                    transparent: true,
+                    opacity: 0.25,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                const offsetLine = new THREE.Line(offsetGeometry, offsetMaterial);
+                mainLine.add(offsetLine);
+
+                // Add a second layer of offset lines for extra thickness
+                if (j % 2 === 0) {
+                    const innerOffset = offsetAmount * 0.5;
+                    const innerPoints = points.map(p => {
+                        const angle = (j / numOffsetLines) * Math.PI * 2;
+                        return new THREE.Vector3(
+                            p.x + Math.cos(angle) * innerOffset,
+                            p.y + Math.sin(angle) * innerOffset,
+                            p.z
+                        );
+                    });
+                    
+                    const innerGeometry = new THREE.BufferGeometry().setFromPoints(innerPoints);
+                    const innerMaterial = new THREE.LineBasicMaterial({ 
+                        color: palette[i % palette.length],
+                        transparent: true,
+                        opacity: 0.35,
+                        blending: THREE.AdditiveBlending
+                    });
+                    
+                    const innerLine = new THREE.Line(innerGeometry, innerMaterial);
+                    mainLine.add(innerLine);
+                }
+            }
+            
+            brushStrokes.push(mainLine);
+            scene.add(mainLine);
+        }
+
+        camera.position.z = 10;
+
+        // Animation
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+            
+            brushStrokes.forEach((stroke, index) => {
+                stroke.rotation.z += 0.001 * (index % 2 ? 1 : -1);
+                // stroke.rotation.y += 0.0005 * (index % 3 ? 1 : -1);
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+
+</body>
+
+</html>
