@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="./OBJLoader.js"></script>
+    <script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.7);
+    dir.position.set(5,5,5);
+    scene.add(dir);
+
+    // Extracted rainbow vertex color material from provided code
+    const rainbowVertexMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        flatShading: true,
+        vertexColors: true,
+        shininess: 0
+    });
+
+    // Load OBJ and create instances
+    const loader = new THREE.OBJLoader();
+    loader.load('models/R17.1_O.obj', function(obj) {
+        // Center geometry
+        obj.traverse(child => {
+            if(child.isMesh) {
+                child.geometry.center();
+                // Generate per-vertex rainbow colors based on Y position
+                const geometry = child.geometry;
+                const pos = geometry.attributes.position;
+                const count = pos.count;
+                const color = new THREE.Color();
+                const colors = new Float32Array(count * 3);
+                for(let i=0; i<count; i++) {
+                    color.setHSL((pos.getY(i) + 1) / 2, 1.0, 0.5, THREE.SRGBColorSpace);
+                    colors[i*3] = color.r;
+                    colors[i*3+1] = color.g;
+                    colors[i*3+2] = color.b;
+                }
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            }
+        });
+        // Create more, smaller instances with more variation and unique starting positions
+        const instances = 18;
+        const usedPositions = [];
+        function getUniquePosition() {
+            let pos, tries = 0;
+            do {
+                pos = [
+                    (Math.random()-0.5)*8,
+                    (Math.random()-0.5)*6,
+                    (Math.random()-0.5)*8
+                ];
+                tries++;
+            } while (usedPositions.some(p => Math.abs(p[0]-pos[0])<0.5 && Math.abs(p[1]-pos[1])<0.5 && Math.abs(p[2]-pos[2])<0.5) && tries < 20);
+            usedPositions.push(pos);
+            return pos;
+        }
+        for(let i=0; i<instances; i++) {
+            const clone = obj.clone();
+            const scale = 0.01 + Math.random()* 0.01;
+            clone.scale.set(scale, scale, scale);
+            clone.rotation.x = Math.random()*Math.PI*2;
+            clone.rotation.y = Math.random()*Math.PI*2;
+            clone.rotation.z = Math.random()*Math.PI*2;
+            const [x, y, z] = getUniquePosition();
+            clone.position.set(x, y, z);
+            // Add color variety by shifting hue, saturation, and lightness per mesh
+            const hueShift = Math.random();
+            const sat = 0.7 + Math.random()*0.3;
+            const light = 0.4 + Math.random()*0.2;
+            clone.traverse(child => {
+                if(child.isMesh) {
+                    // Generate new per-vertex colors for this mesh
+                    const geometry = child.geometry;
+                    const pos = geometry.attributes.position;
+                    const count = pos.count;
+                    const color = new THREE.Color();
+                    const colors = new Float32Array(count * 3);
+                    for(let j=0; j<count; j++) {
+                        color.setHSL((pos.getY(j) + 1) / 2 * 0.7 + hueShift, sat, light, THREE.SRGBColorSpace);
+                        colors[j*3] = color.r;
+                        colors[j*3+1] = color.g;
+                        colors[j*3+2] = color.b;
+                    }
+                    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                    child.material = new THREE.MeshPhongMaterial({
+                        color: new THREE.Color().setHSL(Math.random(), 0.5 + Math.random() * 0.5, 0.4 + Math.random() * 0.2),
+                        flatShading: true,
+                        vertexColors: true,
+                        shininess: 0
+                    });
+                }
+            });
+            scene.add(clone);
+        }
+    });
+
+    camera.position.z = 8;
+
+    // Animate
+    function animate() {
+        requestAnimationFrame(animate);
+        scene.traverse(obj => {
+            if(obj !== scene && obj.type === 'Group') {
+                obj.rotation.y += 0.005;
+            }
+        });
+        renderer.render(scene, camera);
+    }
+    animate();
+    </script>
+</body>
+</html>

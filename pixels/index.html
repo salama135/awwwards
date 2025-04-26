@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flickering Pixels</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Set up scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Color theme function
+        function getThemedColor() {
+            // You can modify these values to change the theme
+            const hue = Math.random() * 0.2 + 0.5; // Blue to purple range (0.5 to 0.7)
+            const saturation = Math.random() * 0.3 + 0.7; // 0.7 to 1.0
+            const lightness = Math.random() * 0.2 + 0.4; // 0.4 to 0.6
+            
+            const color = new THREE.Color();
+            color.setHSL(hue, saturation, lightness);
+            return color;
+        }
+
+        // Create grid of pixels
+        const gridSize = 60; // Number of cells in each dimension
+        const gap = 0.01; // Gap between cells
+        const totalSize = 2; // Total size of the view (from -1 to 1)
+        const availableSpace = totalSize - (gap * (gridSize - 1));
+        const cellSize = availableSpace / gridSize; // This ensures cells are square
+        
+        const pixels = [];
+        const geometry = new THREE.PlaneGeometry(cellSize, cellSize);
+
+        // Calculate starting position to center the grid
+        const startX = -1 + (cellSize / 2);
+        const startY = 1 - (cellSize / 2);
+
+        for (let x = 0; x < gridSize; x++) {
+            for (let y = 0; y < gridSize; y++) {
+                const material = new THREE.MeshBasicMaterial({
+                    color: getThemedColor()
+                });
+                const pixel = new THREE.Mesh(geometry, material);
+                
+                // Position each pixel in a grid
+                pixel.position.x = startX + (x * (cellSize + gap));
+                pixel.position.y = startY - (y * (cellSize + gap));
+                pixel.position.z = 0;
+                
+                scene.add(pixel);
+                pixels.push(pixel);
+            }
+        }
+
+        camera.position.z = 1;
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update each pixel's color
+            pixels.forEach(pixel => {
+                if (Math.random() < 0.1) { // 10% chance to change color each frame
+                    pixel.material.color = getThemedColor();
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html> 
