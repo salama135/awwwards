@@ -33,7 +33,7 @@
 
     // Load OBJ and create instances
     const loader = new THREE.OBJLoader();
-    loader.load('models/R17.1_O.obj', function(obj) {
+    loader.load('models/C10.1_D3.obj', function(obj) {
         // Center geometry
         obj.traverse(child => {
             if(child.isMesh) {
@@ -54,15 +54,15 @@
             }
         });
         // Create more, smaller instances with more variation and unique starting positions
-        const instances = 18;
+        const instances = 1;
         const usedPositions = [];
         function getUniquePosition() {
             let pos, tries = 0;
             do {
                 pos = [
-                    (Math.random()-0.5)*8,
-                    (Math.random()-0.5)*6,
-                    (Math.random()-0.5)*8
+                    0,
+                    0,
+                    0
                 ];
                 tries++;
             } while (usedPositions.some(p => Math.abs(p[0]-pos[0])<0.5 && Math.abs(p[1]-pos[1])<0.5 && Math.abs(p[2]-pos[2])<0.5) && tries < 20);
@@ -109,7 +109,7 @@
         }
     });
 
-    camera.position.z = 8;
+    camera.position.z = 2;
 
     // Animate
     function animate() {
