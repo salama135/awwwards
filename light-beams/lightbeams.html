@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Artistic Light Beams</title>
+  <title>Optimized Artistic Light Beams</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
   <style>
     body {
@@ -24,11 +24,20 @@
     let centerX, centerY;
     let colorPalette;
     let backgroundGradient;
+    let offscreenCanvas;
+    let numBeams = 120; // Starting with many beams
+    let frameRateValue = 0;
+    let useHighPerformanceMode = true;
     
     function setup() {
       createCanvas(windowWidth, windowHeight);
+      pixelDensity(1); // Force lower pixel density for better performance
+      
       centerX = width / 2;
       centerY = height / 2;
+      
+      // Create offscreen graphics for pre-rendering
+      offscreenCanvas = createGraphics(width, height);
       
       // Choose a random color palette from predefined options
       const palettes = [
@@ -45,24 +54,40 @@
       ];
       
       colorPalette = random(palettes);
-      backgroundGradient = createRadialGradient();
+      
+      // Pre-render the background gradient
+      createRadialGradient();
       
       // Initialize beams
-      createBeams(12);
+      createBeams(numBeams);
+      
+      // Limit to a reasonable framerate to save CPU
+      frameRate(60);
     }
 
     function draw() {
-      // Draw background gradient
-      image(backgroundGradient, 0, 0, width, height);
+      // Track framerate for performance monitoring
+      frameRateValue = frameRate();
+      if (frameRateValue < 20 && !useHighPerformanceMode) {
+        useHighPerformanceMode = true;
+        // Reduce particle count in low performance mode
+        particles = particles.slice(0, particles.length / 2);
+      }
       
-      // Apply a subtle overlay for fade effect
+      // Draw pre-rendered background
+      image(backgroundGradient, 0, 0);
+      
+      // Apply a subtle fade effect 
       fill(colorPalette[0].levels[0], colorPalette[0].levels[1], colorPalette[0].levels[2], 15);
       rect(0, 0, width, height);
       
-      // Update and draw all beams
+      // Clear offscreen canvas for beam rendering
+      offscreenCanvas.clear();
+      
+      // Update and draw all beams to offscreen canvas
       for (let i = beams.length - 1; i >= 0; i--) {
         beams[i].update();
-        beams[i].display();
+        beams[i].display(offscreenCanvas);
         
         // Remove dead beams
         if (beams[i].isDead()) {
@@ -70,69 +95,90 @@
         }
       }
       
-      // Update and draw particles
+      // Draw the offscreen canvas to main canvas
+      image(offscreenCanvas, 0, 0);
+      
+      // Use instance mode batching for particles
+      beginShape(POINTS);
       for (let i = particles.length - 1; i >= 0; i--) {
         particles[i].update();
-        particles[i].display();
+        if (useHighPerformanceMode) {
+          particles[i].displayFast();
+        } else {
+          particles[i].display();
+        }
         
         if (particles[i].isDead()) {
           particles.splice(i, 1);
         }
       }
+      endShape();
       
       // Draw the center orb
       drawCenterOrb();
       
-      // Occasionally add new beams
-      if (frameCount % 90 === 0 || beams.length < 8) {
-        createBeams(random(1, 3));
+      // Occasionally add new beams with fewer per batch
+      if (frameCount % 90 === 0 || beams.length < numBeams / 6) {
+        createBeams(min(3, max(1, numBeams / 40)));
       }
       
-      // Add particles periodically
-      if (frameCount % 5 === 0) {
+      // Add particles periodically but limit based on current count
+      if (frameCount % 5 === 0 && particles.length < 100) {
         createParticles(1);
+      }
+      
+      // Show performance info if framerate is poor
+      if (frameRateValue < 30) {
+        fill(255);
+        noStroke();
+        text("FPS: " + frameRateValue.toFixed(1) + " | Beams: " + beams.length + " | Particles: " + particles.length, 10, 20);
+        text("High performance mode: " + (useHighPerformanceMode ? "ON" : "OFF"), 10, 40);
       }
     }
     
     function createRadialGradient() {
-      // Create a radial gradient background
-      let bg = createGraphics(width, height);
+      // Create a radial gradient background - pre-rendered for performance
+      backgroundGradient = createGraphics(width, height);
       let c1 = colorPalette[0]; // Dark outer color
       let c2 = lerpColor(colorPalette[0], colorPalette[1], 0.3); // Slightly lighter inner color
       
-      for (let r = max(width, height); r > 0; r -= 2) {
-        let inter = map(r, 0, max(width, height), 1, 0);
-        let c = lerpColor(c2, c1, inter);
-        bg.noFill();
-        bg.stroke(c);
-        bg.ellipse(width/2, height/2, r*2);
-      }
+      let maxRadius = max(width, height) * 1.5;
+      let step = max(2, floor(maxRadius / 200)); // Adaptive step size based on screen size
       
-      return bg;
+      for (let r = maxRadius; r > 0; r -= step) {
+        let inter = map(r, 0, maxRadius, 1, 0);
+        let c = lerpColor(c2, c1, inter);
+        backgroundGradient.noFill();
+        backgroundGradient.stroke(c);
+        backgroundGradient.ellipse(width/2, height/2, r*2);
+      }
     }
     
     function drawCenterOrb() {
       push();
       translate(centerX, centerY);
       
-      // Glow effect
-      drawingContext.shadowBlur = 30;
-      drawingContext.shadowColor = color(
-        colorPalette[3].levels[0], 
-        colorPalette[3].levels[1], 
-        colorPalette[3].levels[2], 
-        200
-      );
+      // Only use shadow blur in high quality mode
+      if (!useHighPerformanceMode) {
+        drawingContext.shadowBlur = 30;
+        drawingContext.shadowColor = color(
+          colorPalette[3].levels[0], 
+          colorPalette[3].levels[1], 
+          colorPalette[3].levels[2], 
+          200
+        );
+      }
       
-      // Main orb with layers
-      for (let i = 5; i > 0; i--) {
-        let c = lerpColor(colorPalette[2], colorPalette[3], i/5);
+      // Main orb with fewer layers for performance
+      let layers = useHighPerformanceMode ? 3 : 5;
+      for (let i = layers; i > 0; i--) {
+        let c = lerpColor(colorPalette[2], colorPalette[3], i/layers);
         let size = 40 + sin(frameCount * 0.02) * 5;
-        let alpha = map(i, 0, 5, 255, 50);
+        let alpha = map(i, 0, layers, 255, 50);
         
         fill(red(c), green(c), blue(c), alpha);
         noStroke();
-        ellipse(0, 0, size * (1 - i/8), size * (1 - i/8));
+        ellipse(0, 0, size * (1 - i/(layers+3)), size * (1 - i/(layers+3)));
       }
       
       // Inner glow
@@ -143,6 +189,11 @@
     }
     
     function createBeams(num) {
+      // Limit number of beams based on current performance
+      if (frameRateValue > 0 && frameRateValue < 20) {
+        num = max(1, floor(num / 2));
+      }
+      
       for (let i = 0; i < num; i++) {
         let beamColor = random(colorPalette.slice(1)); // Skip the darkest color
         let angle = random(TWO_PI);
@@ -151,7 +202,7 @@
           centerX, 
           centerY, 
           angle,
-          random(width * 0.3, width * 0.8), // Longer beams for better wallpaper effect
+          random(width * 0.3, width * 0.7), // Slightly shorter for performance
           random(0.001, 0.005),
           beamColor,
           random(0.7, 0.95) // Transparency factor
@@ -190,10 +241,23 @@
         this.lifespan = 255;
         this.decayRate = random(0.3, 1.0);
         this.width = random(3, 12);
-        this.glowFactor = random(1.2, 2.0);
         this.waveFactor = random(0.001, 0.004);
         this.waveAmplitude = random(0.1, 0.3);
         this.startTime = frameCount;
+        
+        // Pre-calculate some values
+        this._colors = [];
+        let steps = 10; // Number of pre-calculated colors
+        for (let i = 0; i <= steps; i++) {
+          let t = i / steps;
+          let beamColor;
+          if (t < 0.4) {
+            beamColor = lerpColor(colorPalette[3], this.baseColor, t * 2);
+          } else {
+            beamColor = lerpColor(this.baseColor, colorPalette[0], (t - 0.4) * 1.2);
+          }
+          this._colors.push(beamColor);
+        }
       }
       
       update() {
@@ -206,29 +270,34 @@
           this.lifespan -= this.decayRate;
         }
         
-        // Subtle angle change for organic flow
-        this.angle += sin((frameCount - this.startTime) * this.waveFactor) * this.waveAmplitude * 0.01;
+        // Subtle angle change with less frequent calculation
+        if (frameCount % 2 === 0) {
+          this.angle += sin((frameCount - this.startTime) * this.waveFactor) * this.waveAmplitude * 0.01;
+        }
       }
       
-      display() {
-        push();
-        translate(this.x, this.y);
-        rotate(this.angle);
+      display(canvas) {
+        canvas.push();
+        canvas.translate(this.x, this.y);
+        canvas.rotate(this.angle);
         
-        // Set shadow for glow effect
-        drawingContext.shadowBlur = 15;
-        drawingContext.shadowColor = color(
-          red(this.baseColor), 
-          green(this.baseColor), 
-          blue(this.baseColor), 
-          100
-        );
+        // Only use shadow blur effect in high quality mode
+        if (!useHighPerformanceMode) {
+          canvas.drawingContext.shadowBlur = 15;
+          canvas.drawingContext.shadowColor = color(
+            red(this.baseColor), 
+            green(this.baseColor), 
+            blue(this.baseColor), 
+            100
+          );
+        }
         
-        // Draw the beam with gradient
-        beginShape(TRIANGLE_STRIP);
-        noStroke();
+        // Draw the beam with optimized rendering
+        canvas.beginShape(TRIANGLE_STRIP);
+        canvas.noStroke();
         
-        let steps = 15; // Number of segments for the beam
+        // Adaptive number of steps based on performance
+        let steps = useHighPerformanceMode ? 8 : 15;
         
         for (let i = 0; i <= steps; i++) {
           let t = i / steps;
@@ -237,29 +306,25 @@
           // Calculate width at this point (tapers at the end)
           let w = this.width * (1 - t * 0.7);
           
-          // Add some waviness
-          let waveOffset = sin((frameCount - this.startTime) * 0.05 + t * 10) * w * 0.3;
+          // Add some waviness - less frequent calculation
+          let waveOffset = sin((Math.floor(frameCount/2) - this.startTime/2) * 0.05 + t * 10) * w * 0.3;
           
           // Calculate alpha at this point
           let alphaFactor = (1 - t) * this.lifespan/255 * this.alpha;
           
-          // Use different colors along the beam length
-          let beamColor;
-          if (t < 0.4) {
-            beamColor = lerpColor(colorPalette[3], this.baseColor, t * 2);
-          } else {
-            beamColor = lerpColor(this.baseColor, colorPalette[0], (t - 0.4) * 1.2);
-          }
+          // Use pre-calculated colors for performance
+          let colorIndex = Math.floor(t * this._colors.length);
+          colorIndex = constrain(colorIndex, 0, this._colors.length - 1);
+          let beamColor = this._colors[colorIndex];
           
           // Add vertices for the triangle strip
-          fill(red(beamColor), green(beamColor), blue(beamColor), 255 * alphaFactor);
-          vertex(xPos, waveOffset + w);
-          vertex(xPos, waveOffset - w);
+          canvas.fill(red(beamColor), green(beamColor), blue(beamColor), 255 * alphaFactor);
+          canvas.vertex(xPos, waveOffset + w);
+          canvas.vertex(xPos, waveOffset - w);
         }
         
-        endShape();
-        
-        pop();
+        canvas.endShape();
+        canvas.pop();
       }
       
       isDead() {
@@ -268,36 +333,42 @@
     }
     
     class Particle {
-      constructor(x, y, angle, speed, size, color) {
+      constructor(x, y, angle, speed, size, _color) {
         this.pos = createVector(x, y);
         this.vel = p5.Vector.fromAngle(angle).mult(speed);
         this.acc = createVector(0, 0);
         this.size = size;
         this.originalSize = size;
-        this.color = color;
+        this._color = _color;
         this.lifespan = 255;
         this.decayRate = random(1.0, 2.5);
+        // Pre-calculate the low-alpha version of the color for performance
+        this.lowAlphaColor = color(red(this._color), green(this._color), blue(this._color), 100);
       }
       
       update() {
-        // Apply a subtle attraction/repulsion to center
-        let toCenter = createVector(centerX - this.pos.x, centerY - this.pos.y);
-        let dist = toCenter.mag();
-        toCenter.normalize();
-        
-        if (dist < 100) {
-          // Repel when close
-          toCenter.mult(-0.02);
-        } else if (dist > 400) {
-          // Attract when far
-          toCenter.mult(0.01);
-        } else {
-          // Random wandering in between
-          toCenter.rotate(random(-PI/8, PI/8));
-          toCenter.mult(0.005);
+        // Optimize: Only calculate attraction every few frames
+        if (frameCount % 3 === 0) {
+          // Apply a subtle attraction/repulsion to center
+          let toCenter = createVector(centerX - this.pos.x, centerY - this.pos.y);
+          let dist = toCenter.mag();
+          toCenter.normalize();
+          
+          if (dist < 100) {
+            // Repel when close
+            toCenter.mult(-0.02);
+          } else if (dist > 400) {
+            // Attract when far
+            toCenter.mult(0.01);
+          } else {
+            // Random wandering in between - less frequent
+            toCenter.rotate(random(-PI/8, PI/8));
+            toCenter.mult(0.005);
+          }
+          
+          this.acc.add(toCenter);
         }
         
-        this.acc.add(toCenter);
         this.vel.add(this.acc);
         this.vel.limit(3);
         this.pos.add(this.vel);
@@ -308,25 +379,28 @@
         this.size = map(this.lifespan, 255, 0, this.originalSize, 0.1);
       }
       
+      // Full quality display
       display() {
         push();
         translate(this.pos.x, this.pos.y);
         
         // Glow effect
         drawingContext.shadowBlur = this.size * 2;
-        drawingContext.shadowColor = color(
-          red(this.color), 
-          green(this.color), 
-          blue(this.color), 
-          100
-        );
+        drawingContext.shadowColor = this.lowAlphaColor;
         
         // Draw particle
         noStroke();
-        fill(red(this.color), green(this.color), blue(this.color), this.lifespan);
+        fill(red(this._color), green(this._color), blue(this._color), this.lifespan);
         ellipse(0, 0, this.size, this.size);
         
         pop();
+      }
+      
+      // Faster rendering without glow effects
+      displayFast() {
+        noStroke();
+        fill(red(this._color), green(this._color), blue(this._color), this.lifespan);
+        ellipse(this.pos.x, this.pos.y, this.size, this.size);
       }
       
       isDead() {
@@ -338,7 +412,10 @@
       resizeCanvas(windowWidth, windowHeight);
       centerX = width / 2;
       centerY = height / 2;
-      backgroundGradient = createRadialGradient();
+      
+      // Recreate graphics buffers
+      offscreenCanvas = createGraphics(width, height);
+      createRadialGradient();
       
       // Update positions
       for (let beam of beams) {
@@ -348,9 +425,32 @@
     }
     
     function mousePressed() {
-      // Add new beams on click
-      createBeams(3);
-      createParticles(10);
+      // Add new beams on click - adaptive amount based on current performance
+      let newBeamCount = frameRateValue < 30 ? 3 : 6;
+      createBeams(newBeamCount);
+      
+      let newParticleCount = frameRateValue < 30 ? 5 : 10;
+      createParticles(newParticleCount);
+      
+      // Toggle performance mode on double-click
+      if (mouseButton === LEFT && (millis() - lastClickTime < 300)) {
+        useHighPerformanceMode = !useHighPerformanceMode;
+      }
+      lastClickTime = millis();
+    }
+    
+    let lastClickTime = 0;
+    
+    function keyPressed() {
+      // Toggle performance mode with 'p' key
+      if (key === 'p' || key === 'P') {
+        useHighPerformanceMode = !useHighPerformanceMode;
+      }
+      
+      // Add more beams with space bar
+      if (key === ' ') {
+        createBeams(10);
+      }
     }
   </script>
 </body>
