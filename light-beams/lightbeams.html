@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artistic Light Beams</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    let beams = [];
+    let particles = [];
+    let centerX, centerY;
+    let colorPalette;
+    let backgroundGradient;
+    
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      centerX = width / 2;
+      centerY = height / 2;
+      
+      // Choose a random color palette from predefined options
+      const palettes = [
+        // Celestial blues and purples
+        [color(20, 30, 70), color(70, 100, 180), color(100, 140, 230), color(180, 200, 255)],
+        // Warm sunset oranges and pinks
+        [color(50, 10, 30), color(130, 30, 70), color(230, 90, 100), color(255, 180, 150)],
+        // Teal and gold
+        [color(10, 40, 60), color(30, 110, 130), color(60, 170, 190), color(250, 210, 130)],
+        // Deep purple and magenta
+        [color(30, 10, 40), color(90, 30, 110), color(160, 70, 180), color(230, 140, 220)],
+        // Emerald and gold
+        [color(10, 40, 30), color(20, 80, 60), color(40, 160, 120), color(250, 220, 120)]
+      ];
+      
+      colorPalette = random(palettes);
+      backgroundGradient = createRadialGradient();
+      
+      // Initialize beams
+      createBeams(12);
+    }
+
+    function draw() {
+      // Draw background gradient
+      image(backgroundGradient, 0, 0, width, height);
+      
+      // Apply a subtle overlay for fade effect
+      fill(colorPalette[0].levels[0], colorPalette[0].levels[1], colorPalette[0].levels[2], 15);
+      rect(0, 0, width, height);
+      
+      // Update and draw all beams
+      for (let i = beams.length - 1; i >= 0; i--) {
+        beams[i].update();
+        beams[i].display();
+        
+        // Remove dead beams
+        if (beams[i].isDead()) {
+          beams.splice(i, 1);
+        }
+      }
+      
+      // Update and draw particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].display();
+        
+        if (particles[i].isDead()) {
+          particles.splice(i, 1);
+        }
+      }
+      
+      // Draw the center orb
+      drawCenterOrb();
+      
+      // Occasionally add new beams
+      if (frameCount % 90 === 0 || beams.length < 8) {
+        createBeams(random(1, 3));
+      }
+      
+      // Add particles periodically
+      if (frameCount % 5 === 0) {
+        createParticles(1);
+      }
+    }
+    
+    function createRadialGradient() {
+      // Create a radial gradient background
+      let bg = createGraphics(width, height);
+      let c1 = colorPalette[0]; // Dark outer color
+      let c2 = lerpColor(colorPalette[0], colorPalette[1], 0.3); // Slightly lighter inner color
+      
+      for (let r = max(width, height); r > 0; r -= 2) {
+        let inter = map(r, 0, max(width, height), 1, 0);
+        let c = lerpColor(c2, c1, inter);
+        bg.noFill();
+        bg.stroke(c);
+        bg.ellipse(width/2, height/2, r*2);
+      }
+      
+      return bg;
+    }
+    
+    function drawCenterOrb() {
+      push();
+      translate(centerX, centerY);
+      
+      // Glow effect
+      drawingContext.shadowBlur = 30;
+      drawingContext.shadowColor = color(
+        colorPalette[3].levels[0], 
+        colorPalette[3].levels[1], 
+        colorPalette[3].levels[2], 
+        200
+      );
+      
+      // Main orb with layers
+      for (let i = 5; i > 0; i--) {
+        let c = lerpColor(colorPalette[2], colorPalette[3], i/5);
+        let size = 40 + sin(frameCount * 0.02) * 5;
+        let alpha = map(i, 0, 5, 255, 50);
+        
+        fill(red(c), green(c), blue(c), alpha);
+        noStroke();
+        ellipse(0, 0, size * (1 - i/8), size * (1 - i/8));
+      }
+      
+      // Inner glow
+      fill(255, 255, 255, 150 + sin(frameCount * 0.05) * 50);
+      ellipse(0, 0, 15 + sin(frameCount * 0.05) * 3, 15 + sin(frameCount * 0.05) * 3);
+      
+      pop();
+    }
+    
+    function createBeams(num) {
+      for (let i = 0; i < num; i++) {
+        let beamColor = random(colorPalette.slice(1)); // Skip the darkest color
+        let angle = random(TWO_PI);
+        
+        beams.push(new LightBeam(
+          centerX, 
+          centerY, 
+          angle,
+          random(width * 0.3, width * 0.8), // Longer beams for better wallpaper effect
+          random(0.001, 0.005),
+          beamColor,
+          random(0.7, 0.95) // Transparency factor
+        ));
+      }
+    }
+    
+    function createParticles(num) {
+      for (let i = 0; i < num; i++) {
+        let angle = random(TWO_PI);
+        let speed = random(0.2, 1.5);
+        let particleColor = random(colorPalette.slice(1));
+        
+        particles.push(new Particle(
+          centerX, 
+          centerY, 
+          angle,
+          speed,
+          random(3, 8),
+          particleColor
+        ));
+      }
+    }
+    
+    class LightBeam {
+      constructor(x, y, angle, maxLength, speed, color, alpha) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.length = 0;
+        this.maxLength = maxLength;
+        this.speed = speed;
+        this.baseColor = color;
+        this.alpha = alpha;
+        this.growing = true;
+        this.lifespan = 255;
+        this.decayRate = random(0.3, 1.0);
+        this.width = random(3, 12);
+        this.glowFactor = random(1.2, 2.0);
+        this.waveFactor = random(0.001, 0.004);
+        this.waveAmplitude = random(0.1, 0.3);
+        this.startTime = frameCount;
+      }
+      
+      update() {
+        if (this.growing) {
+          this.length += (this.maxLength - this.length) * this.speed;
+          if (this.length > this.maxLength * 0.95) {
+            this.growing = false;
+          }
+        } else {
+          this.lifespan -= this.decayRate;
+        }
+        
+        // Subtle angle change for organic flow
+        this.angle += sin((frameCount - this.startTime) * this.waveFactor) * this.waveAmplitude * 0.01;
+      }
+      
+      display() {
+        push();
+        translate(this.x, this.y);
+        rotate(this.angle);
+        
+        // Set shadow for glow effect
+        drawingContext.shadowBlur = 15;
+        drawingContext.shadowColor = color(
+          red(this.baseColor), 
+          green(this.baseColor), 
+          blue(this.baseColor), 
+          100
+        );
+        
+        // Draw the beam with gradient
+        beginShape(TRIANGLE_STRIP);
+        noStroke();
+        
+        let steps = 15; // Number of segments for the beam
+        
+        for (let i = 0; i <= steps; i++) {
+          let t = i / steps;
+          let xPos = this.length * t;
+          
+          // Calculate width at this point (tapers at the end)
+          let w = this.width * (1 - t * 0.7);
+          
+          // Add some waviness
+          let waveOffset = sin((frameCount - this.startTime) * 0.05 + t * 10) * w * 0.3;
+          
+          // Calculate alpha at this point
+          let alphaFactor = (1 - t) * this.lifespan/255 * this.alpha;
+          
+          // Use different colors along the beam length
+          let beamColor;
+          if (t < 0.4) {
+            beamColor = lerpColor(colorPalette[3], this.baseColor, t * 2);
+          } else {
+            beamColor = lerpColor(this.baseColor, colorPalette[0], (t - 0.4) * 1.2);
+          }
+          
+          // Add vertices for the triangle strip
+          fill(red(beamColor), green(beamColor), blue(beamColor), 255 * alphaFactor);
+          vertex(xPos, waveOffset + w);
+          vertex(xPos, waveOffset - w);
+        }
+        
+        endShape();
+        
+        pop();
+      }
+      
+      isDead() {
+        return this.lifespan <= 0;
+      }
+    }
+    
+    class Particle {
+      constructor(x, y, angle, speed, size, color) {
+        this.pos = createVector(x, y);
+        this.vel = p5.Vector.fromAngle(angle).mult(speed);
+        this.acc = createVector(0, 0);
+        this.size = size;
+        this.originalSize = size;
+        this.color = color;
+        this.lifespan = 255;
+        this.decayRate = random(1.0, 2.5);
+      }
+      
+      update() {
+        // Apply a subtle attraction/repulsion to center
+        let toCenter = createVector(centerX - this.pos.x, centerY - this.pos.y);
+        let dist = toCenter.mag();
+        toCenter.normalize();
+        
+        if (dist < 100) {
+          // Repel when close
+          toCenter.mult(-0.02);
+        } else if (dist > 400) {
+          // Attract when far
+          toCenter.mult(0.01);
+        } else {
+          // Random wandering in between
+          toCenter.rotate(random(-PI/8, PI/8));
+          toCenter.mult(0.005);
+        }
+        
+        this.acc.add(toCenter);
+        this.vel.add(this.acc);
+        this.vel.limit(3);
+        this.pos.add(this.vel);
+        this.acc.mult(0);
+        
+        // Decay lifespan
+        this.lifespan -= this.decayRate;
+        this.size = map(this.lifespan, 255, 0, this.originalSize, 0.1);
+      }
+      
+      display() {
+        push();
+        translate(this.pos.x, this.pos.y);
+        
+        // Glow effect
+        drawingContext.shadowBlur = this.size * 2;
+        drawingContext.shadowColor = color(
+          red(this.color), 
+          green(this.color), 
+          blue(this.color), 
+          100
+        );
+        
+        // Draw particle
+        noStroke();
+        fill(red(this.color), green(this.color), blue(this.color), this.lifespan);
+        ellipse(0, 0, this.size, this.size);
+        
+        pop();
+      }
+      
+      isDead() {
+        return this.lifespan <= 0;
+      }
+    }
+    
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+      centerX = width / 2;
+      centerY = height / 2;
+      backgroundGradient = createRadialGradient();
+      
+      // Update positions
+      for (let beam of beams) {
+        beam.x = centerX;
+        beam.y = centerY;
+      }
+    }
+    
+    function mousePressed() {
+      // Add new beams on click
+      createBeams(3);
+      createParticles(10);
+    }
+  </script>
+</body>
+</html>
