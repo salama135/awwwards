@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Web Experiments</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding: 2rem 0;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .project-card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            padding: 1.5rem;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .project-description {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem 0;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Creative Web Experiments</h1>
+            <p class="subtitle">A collection of interactive web experiences and visual experiments</p>
+        </header>
+
+        <main class="projects-grid">
+            <div class="project-card">
+                <a href="geometry/index.html">
+                    <h2 class="project-title">3D Geometry</h2>
+                    <p class="project-description">Explore interactive 3D geometric models and shapes</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="cubes/index.html">
+                    <h2 class="project-title">Cubes</h2>
+                    <p class="project-description">Interactive cube-based visualization experiment</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="flow-fields/index.html">
+                    <h2 class="project-title">Flow Fields</h2>
+                    <p class="project-description">Generative art using flow field algorithms</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="letter-dots/index.html">
+                    <h2 class="project-title">Letter Dots</h2>
+                    <p class="project-description">Typography experiments with particle systems</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="light-beams/lightbeams.html">
+                    <h2 class="project-title">Light Beams</h2>
+                    <p class="project-description">Dynamic light beam visualization effects</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="pixels/index.html">
+                    <h2 class="project-title">Pixels</h2>
+                    <p class="project-description">Creative pixel manipulation experiments</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="spiral/index.html">
+                    <h2 class="project-title">Spiral</h2>
+                    <p class="project-description">Mesmerizing spiral-based animations</p>
+                </a>
+            </div>
+
+            <div class="project-card">
+                <a href="personal-website/solar-system-portfolio.html">
+                    <h2 class="project-title">Solar System Portfolio</h2>
+                    <p class="project-description">Interactive portfolio with a solar system theme</p>
+                </a>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2025 Creative Web Experiments. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
