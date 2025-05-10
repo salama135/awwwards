@@ -722,8 +722,17 @@
       updateThemeButton(savedTheme);
 
       // Three.js variables
-      let scene, camera, renderer, starField, starsMaterial;
+      let scene, camera, renderer, starField;
       const starCount = 10000;
+      const rainbowColors = [
+        0xFF0000, // Red
+        0xFF7F00, // Orange
+        0xFFFF00, // Yellow
+        0x00FF00, // Green
+        0x0000FF, // Blue
+        0x4B0082, // Indigo
+        0x9400D3  // Violet
+      ];
 
       // Initialize Three.js scene
       function initThreeJS() {
@@ -739,30 +748,34 @@
 
         // Create starfield
         const starsGeometry = new THREE.BufferGeometry();
-        const starsPositions = new Float32Array(starCount * 6);
+        const starsPositions = new Float32Array(starCount * 3);
+        const starsColors = new Float32Array(starCount * 3);
 
-        for (let i = 0; i < starCount * 6; i += 6) {
-          const x = (Math.random() - 0.5) * 2000;
-          const y = (Math.random() - 0.5) * 2000;
-          const z = (Math.random() - 0.5) * 2000;
+        for (let i = 0; i < starCount; i++) {
+          const i3 = i * 3;
+          // Position
+          starsPositions[i3] = (Math.random() - 0.5) * 2000;     // x
+          starsPositions[i3 + 1] = (Math.random() - 0.5) * 2000; // y
+          starsPositions[i3 + 2] = (Math.random() - 0.5) * 2000; // z
 
-          starsPositions[i] = x;
-          starsPositions[i + 1] = y;
-          starsPositions[i + 2] = z;
-
-          starsPositions[i + 3] = x;
-          starsPositions[i + 4] = y;
-          starsPositions[i + 5] = z + 50;
+          // Color
+          const color = new THREE.Color(rainbowColors[Math.floor(Math.random() * rainbowColors.length)]);
+          starsColors[i3] = color.r;
+          starsColors[i3 + 1] = color.g;
+          starsColors[i3 + 2] = color.b;
         }
 
         starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
-        starsMaterial = new THREE.LineBasicMaterial({
-          color: 0xffffff,
+        starsGeometry.setAttribute('color', new THREE.BufferAttribute(starsColors, 3));
+
+        const starsMaterial = new THREE.PointsMaterial({
+          size: 3,
+          vertexColors: true,
           transparent: true,
           opacity: 0.8
         });
 
-        starField = new THREE.LineSegments(starsGeometry, starsMaterial);
+        starField = new THREE.Points(starsGeometry, starsMaterial);
         scene.add(starField);
 
         // Position camera
@@ -770,18 +783,14 @@
         camera.lookAt(new THREE.Vector3(0, 0, -50));
       }
 
-      // Function to update star colors based on theme
+      // Function to update star visibility based on theme
       function updateStarColors(theme) {
-        if (!starsMaterial) return;
+        if (!starField) return;
         
         if (theme === 'light') {
-          starsMaterial.color.setHex(0x000011);
-          starsMaterial.opacity = 1;
-          renderer.setClearColor(0xffffff, 1);
+          starField.material.opacity = 0.5;
         } else {
-          starsMaterial.color.setHex(0xffffff);
-          starsMaterial.opacity = 1;
-          renderer.setClearColor(0x000011, 1);
+          starField.material.opacity = 0.8;
         }
       }
 
@@ -819,27 +828,22 @@
           camera.position.y += (-mouseY * 5 - camera.position.y) * 0.01;
           camera.lookAt(new THREE.Vector3(0, 0, -50));
 
-          // Update starfield
+          // Update starfield positions
           const positions = starField.geometry.attributes.position.array;
-          for (let i = 0; i < positions.length; i += 6) {
-            positions[i + 2] += 50;
-            positions[i + 5] += 50;
+          for (let i = 0; i < positions.length; i += 3) {
+            positions[i + 2] += 1; // Move stars forward
 
+            // Reset star position when it goes too far
             if (positions[i + 2] > 1000) {
-              const x = (Math.random() - 0.5) * 2000;
-              const y = (Math.random() - 0.5) * 2000;
-              const z = -1000;
-
-              positions[i] = x;
-              positions[i + 1] = y;
-              positions[i + 2] = z;
-
-              positions[i + 3] = x;
-              positions[i + 4] = y;
-              positions[i + 5] = z + 50;
+              positions[i] = (Math.random() - 0.5) * 2000;
+              positions[i + 1] = (Math.random() - 0.5) * 2000;
+              positions[i + 2] = -1000;
             }
           }
           starField.geometry.attributes.position.needsUpdate = true;
+
+          // Slowly rotate the entire starfield
+          starField.rotation.y += 0.0003;
         }
 
         renderer.render(scene, camera);
