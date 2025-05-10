@@ -32,23 +32,23 @@
       
       // Choose a random color palette from predefined options
       const palettes = [
-        // Celestial blues and purples
-        [color(20, 30, 70), color(70, 100, 180), color(100, 140, 230), color(180, 200, 255)],
-        // Warm sunset oranges and pinks
-        [color(50, 10, 30), color(130, 30, 70), color(230, 90, 100), color(255, 180, 150)],
-        // Teal and gold
-        [color(10, 40, 60), color(30, 110, 130), color(60, 170, 190), color(250, 210, 130)],
-        // Deep purple and magenta
-        [color(30, 10, 40), color(90, 30, 110), color(160, 70, 180), color(230, 140, 220)],
-        // Emerald and gold
-        [color(10, 40, 30), color(20, 80, 60), color(40, 160, 120), color(250, 220, 120)]
+        // Rainbow theme
+        [
+          color(20, 0, 60),     // Dark background base
+          color(255, 0, 0),     // Red
+          color(255, 165, 0),   // Orange
+          color(255, 255, 0),   // Yellow
+          color(0, 255, 0),     // Green
+          color(0, 165, 255),   // Blue
+          color(128, 0, 255)    // Purple
+        ]
       ];
       
-      colorPalette = random(palettes);
+      colorPalette = palettes[0]; // Always use the rainbow palette
       backgroundGradient = createRadialGradient();
       
-      // Initialize beams
-      createBeams(12);
+      // Initialize beams with rainbow colors
+      createBeams(14); // Create more initial beams for fuller effect
     }
 
     function draw() {
@@ -115,18 +115,22 @@
       push();
       translate(centerX, centerY);
       
+      // Cycle through rainbow colors for the orb
+      let orbColorIndex = floor(frameCount / 30) % (colorPalette.length - 1) + 1;
+      let nextColorIndex = (orbColorIndex + 1) % (colorPalette.length - 1) + 1;
+      
       // Glow effect
       drawingContext.shadowBlur = 30;
       drawingContext.shadowColor = color(
-        colorPalette[3].levels[0], 
-        colorPalette[3].levels[1], 
-        colorPalette[3].levels[2], 
+        colorPalette[orbColorIndex].levels[0], 
+        colorPalette[orbColorIndex].levels[1], 
+        colorPalette[orbColorIndex].levels[2], 
         200
       );
       
       // Main orb with layers
       for (let i = 5; i > 0; i--) {
-        let c = lerpColor(colorPalette[2], colorPalette[3], i/5);
+        let c = lerpColor(colorPalette[orbColorIndex], colorPalette[nextColorIndex], i/5);
         let size = 40 + sin(frameCount * 0.02) * 5;
         let alpha = map(i, 0, 5, 255, 50);
         
@@ -135,8 +139,9 @@
         ellipse(0, 0, size * (1 - i/8), size * (1 - i/8));
       }
       
-      // Inner glow
-      fill(255, 255, 255, 150 + sin(frameCount * 0.05) * 50);
+      // Inner glow with rainbow pulse
+      let innerColor = colorPalette[orbColorIndex];
+      fill(red(innerColor), green(innerColor), blue(innerColor), 150 + sin(frameCount * 0.05) * 50);
       ellipse(0, 0, 15 + sin(frameCount * 0.05) * 3, 15 + sin(frameCount * 0.05) * 3);
       
       pop();
@@ -144,17 +149,19 @@
     
     function createBeams(num) {
       for (let i = 0; i < num; i++) {
-        let beamColor = random(colorPalette.slice(1)); // Skip the darkest color
+        // Cycle through rainbow colors (skip the first color which is background)
+        let colorIndex = (frameCount + i) % (colorPalette.length - 1) + 1;
+        let beamColor = colorPalette[colorIndex];
         let angle = random(TWO_PI);
         
         beams.push(new LightBeam(
           centerX, 
           centerY, 
           angle,
-          random(width * 0.3, width * 0.8), // Longer beams for better wallpaper effect
+          random(width * 0.3, width * 0.8),
           random(0.001, 0.005),
           beamColor,
-          random(0.7, 0.95) // Transparency factor
+          random(0.7, 0.95)
         ));
       }
     }
@@ -243,16 +250,11 @@
           // Calculate alpha at this point
           let alphaFactor = (1 - t) * this.lifespan/255 * this.alpha;
           
-          // Use different colors along the beam length
-          let beamColor;
-          if (t < 0.4) {
-            beamColor = lerpColor(colorPalette[3], this.baseColor, t * 2);
-          } else {
-            beamColor = lerpColor(this.baseColor, colorPalette[0], (t - 0.4) * 1.2);
-          }
+          // Keep the pure color but fade it out towards the end
+          let beamColor = this.baseColor;
           
-          // Add vertices for the triangle strip
-          fill(red(beamColor), green(beamColor), blue(beamColor), 255 * alphaFactor);
+          // Add vertices for the triangle strip with pure color
+          fill(red(beamColor), green(beamColor), blue(beamColor), 255 * alphaFactor * (1 - t * 0.8));
           vertex(xPos, waveOffset + w);
           vertex(xPos, waveOffset - w);
         }
