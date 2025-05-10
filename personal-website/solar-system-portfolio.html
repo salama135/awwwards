@@ -767,7 +767,7 @@
           starsPositions[i + 2] = z;
           starsPositions[i + 3] = x;
           starsPositions[i + 4] = y;
-          starsPositions[i + 5] = z + 50;
+          starsPositions[i + 5] = z + 500;
 
           // Generate a random color from the rainbow array
           const color = new THREE.Color(rainbowColors[Math.floor(Math.random() * rainbowColors.length)]);
@@ -862,7 +862,7 @@
 
               positions[i + 3] = x;
               positions[i + 4] = y;
-              positions[i + 5] = z + 50;
+              positions[i + 5] = z + 500;
             }
           }
           starField.geometry.attributes.position.needsUpdate = true;
