@@ -15,9 +15,106 @@
         canvas {
             display: block; /* Remove default bottom margin */
         }
+        #controlPanel {
+            position: fixed;
+            top: -400px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            transition: top 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #controlPanel.visible {
+            top: 20px;
+        }
+        #controlPanel:hover {
+            top: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        .control-group input[type="number"],
+        .control-group input[type="text"],
+        .control-group input[type="range"] {
+            width: 100%;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+        }
+        .control-group input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        #colorInputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
+    <div id="controlPanel">
+        <h3 style="margin-top: 0; color: #fff;">Flow Field Controls</h3>
+        
+        <div class="control-group">
+            <label for="numParticles">Number of Particles</label>
+            <input type="number" id="numParticles" min="50" max="2000" step="50">
+        </div>
+
+        <div class="control-group">
+            <label for="paletteInterval">Palette Switch Interval (seconds)</label>
+            <input type="number" id="paletteInterval" min="1" max="60" step="1">
+        </div>
+
+        <div class="control-group">
+            <label for="particleSpeed">Particle Speed</label>
+            <input type="range" id="particleSpeed" min="1" max="8" step="0.5">
+        </div>
+
+        <div class="control-group">
+            <label for="paletteName">New Palette Name</label>
+            <input type="text" id="paletteName" placeholder="Enter palette name">
+            <div id="colorInputs">
+                <input type="color" class="paletteColor">
+                <input type="color" class="paletteColor">
+                <input type="color" class="paletteColor">
+                <input type="color" class="paletteColor">
+            </div>
+            <button onclick="addNewPalette()" style="margin-top: 10px;">Add Palette</button>
+        </div>
+
+        <div class="control-group">
+            <label>Current Palette</label>
+            <select id="currentPaletteSelect"></select>
+        </div>
+    </div>
     <script src="sketch.js"></script>
 </body>
 </html>
