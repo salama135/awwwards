@@ -4,6 +4,37 @@
 // Global variables for the simulation
 let particles = [];
 const numParticles = 300; // Number of particles in the simulation
+let colorOffset = 0; // Global color offset for shifting colors
+
+// Color palette arrays (you can modify these to create different moods)
+const colorPalettes = {
+  cosmic: [
+    [64, 127, 255],  // Light blue
+    [255, 64, 255],  // Pink
+    [128, 0, 255],   // Purple
+    [0, 255, 255]    // Cyan
+  ],
+  sunset: [
+    [255, 128, 0],   // Orange
+    [255, 64, 64],   // Red
+    [255, 192, 128], // Light orange
+    [128, 0, 64]     // Dark red
+  ],
+  retro: [
+    [255, 255, 255], // White
+    [255, 192, 128], // Light orange
+    [255, 0, 0],     // Red
+    [0, 0, 255]      // Blue
+  ],
+  vibrant: [
+    [255, 0, 0],     // Red
+    [0, 255, 0],     // Green
+    [0, 0, 255],     // Blue
+    [255, 255, 0]    // Yellow
+  ]
+};
+
+let currentPalette = 'cosmic'; // Can switch between palettes
 
 let flowfield;
 let scl = 20; // Scale of the grid cells for the flow field
@@ -31,8 +62,11 @@ function setup() {
 // --- DRAW FUNCTION --- //
 // This function runs repeatedly, creating the animation.
 function draw() {
-  // Semi-transparent background for fading trails effect
-  background(5, 5, 5, 25); 
+  // Create a more dynamic background effect
+  background(5, 5, 5, 15); // Lower alpha for longer trails
+
+  // Update global color offset
+  colorOffset += 0.002;
 
   // --- Flow Field Calculation ---
   // This section updates the flow field vectors in each frame using Perlin noise.
@@ -80,12 +114,24 @@ class Particle {
     this.pos = createVector(random(width), random(height));
     this.vel = createVector(0, 0); // Initial velocity
     this.acc = createVector(0, 0); // Initial acceleration
-    this.maxSpeed = 3; // Maximum speed of the particle
+    this.maxSpeed = random(2, 4); // Varied speeds for more dynamic movement
     this.prevPos = this.pos.copy(); // Store previous position for drawing trails
     this.lifespan = 255; // Initial lifespan for fading or rebirth (optional)
+    this.colorIndex = floor(random(colorPalettes[currentPalette].length));
+    this.size = random(0.5, 2.5); // Varied particle sizes
+    this.updateColor(); // Initialize color
+  }
 
-    // Assign a color to the particle - can be randomized or from a palette
-    this.color = color(random(100, 200), random(150, 255), 255, 100); // Soft blues/cyans with alpha
+  updateColor() {
+    let baseColor = colorPalettes[currentPalette][this.colorIndex];
+    // Create a shifting effect based on position and time
+    let hueShift = map(noise(this.pos.x * 0.01, this.pos.y * 0.01, colorOffset), 0, 1, -20, 20);
+    this.color = color(
+      baseColor[0] + hueShift,
+      baseColor[1] + hueShift * 0.5,
+      baseColor[2] + hueShift * 0.25,
+      100
+    );
   }
 
   // --- update() method ---
@@ -95,6 +141,7 @@ class Particle {
     this.vel.limit(this.maxSpeed); // Limit velocity to maxSpeed
     this.pos.add(this.vel); // Add velocity to position
     this.acc.mult(0); // Reset acceleration (forces are applied each frame)
+    this.updateColor(); // Update color each frame for dynamic effect
     // this.lifespan -= 1.0; // Decrease lifespan (optional)
   }
 
@@ -119,13 +166,12 @@ class Particle {
   // --- display() method ---
   // Draws the particle on the canvas.
   display() {
-    // stroke(this.color); // Particle color
-    // strokeWeight(2); // Particle line thickness
-    // point(this.pos.x, this.pos.y); // Draw particle as a point
-
-    // Draw particle as a line (trail effect)
     stroke(this.color);
-    strokeWeight(1.5); // Thinner lines for a more delicate look
+    strokeWeight(this.size);
+    // Draw particle with dynamic alpha based on velocity
+    let speed = this.vel.mag();
+    let alpha = map(speed, 0, this.maxSpeed, 50, 200);
+    stroke(red(this.color), green(this.color), blue(this.color), alpha);
     line(this.pos.x, this.pos.y, this.prevPos.x, this.prevPos.y);
     this.updatePrev(); // Update previous position after drawing
   }
@@ -163,4 +209,18 @@ function windowResized() {
   // For simplicity, particles will just continue in the new space.
   // background(5,5,5); // Redraw background immediately
 }
+
+// Add before windowResized function
+function switchPalette() {
+  let palettes = Object.keys(colorPalettes);
+  let currentIndex = palettes.indexOf(currentPalette);
+  currentPalette = palettes[(currentIndex + 1) % palettes.length];
+  // Update all particles with new colors
+  for (let particle of particles) {
+    particle.colorIndex = floor(random(colorPalettes[currentPalette].length));
+  }
+}
+
+// Switch palette every 10 seconds
+setInterval(switchPalette, 10000);
 
