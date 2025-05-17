@@ -3,11 +3,8 @@
 
 // Global variables for the simulation
 let particles = [];
-let numParticles = 300; // Now this can be modified through the control panel
-let colorOffset = 0;
-let paletteInterval = 10; // Interval in seconds for palette switching
-let maxParticleSpeed = 4; // Maximum speed for particles
-let paletteSwitchInterval;
+const numParticles = 300; // Number of particles in the simulation
+let colorOffset = 0; // Global color offset for shifting colors
 
 // Color palette arrays (you can modify these to create different moods)
 const colorPalettes = {
@@ -48,36 +45,18 @@ let zoff = 0; // Time dimension for Perlin noise, to make the field dynamic
 // --- SETUP FUNCTION --- //
 // This function runs once when the sketch starts.
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  
+  createCanvas(windowWidth, windowHeight); // Create a canvas that fills the browser window
+  // background(5, 5, 5); // Initial dark background, will be redrawn with alpha for trails
+
   // Calculate the number of columns and rows based on canvas size and scale
   cols = floor(width / scl);
   rows = floor(height / scl);
-  flowfield = new Array(cols * rows);
+  flowfield = new Array(cols * rows); // Initialize the flow field array
 
   // Create particles and add them to the particles array
   for (let i = 0; i < numParticles; i++) {
     particles[i] = new Particle();
   }
-  
-  // Initialize controls
-  initializeControls();
-  
-  // Start palette switching
-  resetPaletteInterval();
-
-  // Add hover detection for control panel visibility
-  let controlPanel = document.getElementById('controlPanel');
-  let triggerArea = createDiv('');
-  triggerArea.position(0, 0);
-  triggerArea.size(100, 100);
-  triggerArea.style('position', 'fixed');
-  triggerArea.mouseOver(() => {
-    controlPanel.classList.add('visible');
-  });
-  controlPanel.addEventListener('mouseleave', () => {
-    controlPanel.classList.remove('visible');
-  });
 }
 
 // --- DRAW FUNCTION --- //
@@ -226,9 +205,12 @@ function windowResized() {
   cols = floor(width / scl);
   rows = floor(height / scl);
   flowfield = new Array(cols * rows); // Reinitialize flow field array
+  // Optionally, re-initialize particles or adjust their positions
+  // For simplicity, particles will just continue in the new space.
+  // background(5,5,5); // Redraw background immediately
 }
 
-// Function to switch color palette
+// Add before windowResized function
 function switchPalette() {
   let palettes = Object.keys(colorPalettes);
   let currentIndex = palettes.indexOf(currentPalette);
@@ -236,143 +218,9 @@ function switchPalette() {
   // Update all particles with new colors
   for (let particle of particles) {
     particle.colorIndex = floor(random(colorPalettes[currentPalette].length));
-    particle.updateColor();
   }
 }
 
-// Reset palette switching interval
-function resetPaletteInterval() {
-  if (paletteSwitchInterval) {
-    clearInterval(paletteSwitchInterval);
-  }
-  paletteSwitchInterval = setInterval(switchPalette, paletteInterval * 1000);
-}
-
-// Function to update particle count
-function updateParticleCount(newCount) {
-  if (newCount > particles.length) {
-    // Add more particles
-    for (let i = particles.length; i < newCount; i++) {
-      particles.push(new Particle());
-    }
-  } else {
-    // Remove particles
-    particles = particles.slice(0, newCount);
-  }
-  numParticles = newCount;
-}
-
-// Function to update palette select dropdown
-function updatePaletteSelect() {
-  const select = document.getElementById('currentPaletteSelect');
-  select.innerHTML = '';
-  Object.keys(colorPalettes).forEach(name => {
-    const option = document.createElement('option');
-    option.value = name;
-    option.text = name;
-    option.selected = name === currentPalette;
-    select.appendChild(option);
-  });
-}
-
-// Function to initialize controls
-function initializeControls() {
-  // Set initial values in controls
-  document.getElementById('numParticles').value = numParticles;
-  document.getElementById('paletteInterval').value = paletteInterval;
-  document.getElementById('particleSpeed').value = maxParticleSpeed;
-  
-  // Update palette select
-  updatePaletteSelect();
-  
-  // Add event listeners
-  document.getElementById('numParticles').addEventListener('change', (e) => {
-    const newCount = parseInt(e.target.value);
-    updateParticleCount(newCount);
-  });
-  
-  document.getElementById('paletteInterval').addEventListener('change', (e) => {
-    paletteInterval = parseInt(e.target.value);
-    resetPaletteInterval();
-  });
-  
-  document.getElementById('particleSpeed').addEventListener('input', (e) => {
-    maxParticleSpeed = parseFloat(e.target.value);
-    particles.forEach(p => p.maxSpeed = random(maxParticleSpeed * 0.5, maxParticleSpeed));
-  });
-  
-  document.getElementById('currentPaletteSelect').addEventListener('change', (e) => {
-    currentPalette = e.target.value;
-    particles.forEach(p => {
-      p.colorIndex = floor(random(colorPalettes[currentPalette].length));
-      p.updateColor();
-    });
-  });
-}
-
-// Function to update particle count
-function updateParticleCount(newCount) {
-  if (newCount > particles.length) {
-    // Add more particles
-    for (let i = particles.length; i < newCount; i++) {
-      particles.push(new Particle());
-    }
-  } else {
-    // Remove particles
-    particles = particles.slice(0, newCount);
-  }
-  numParticles = newCount;
-}
-
-// Function to update palette select dropdown
-function updatePaletteSelect() {
-  const select = document.getElementById('currentPaletteSelect');
-  select.innerHTML = '';
-  Object.keys(colorPalettes).forEach(name => {
-    const option = document.createElement('option');
-    option.value = name;
-    option.text = name;
-    option.selected = name === currentPalette;
-    select.appendChild(option);
-  });
-}
-
-// Function to add new palette
-function addNewPalette() {
-  const name = document.getElementById('paletteName').value.trim();
-  if (!name) {
-    alert('Please enter a palette name');
-    return;
-  }
-  
-  const colors = Array.from(document.getElementsByClassName('paletteColor'))
-    .map(input => {
-      const hex = input.value;
-      // Convert hex to RGB
-      const r = parseInt(hex.slice(1,3), 16);
-      const g = parseInt(hex.slice(3,5), 16);
-      const b = parseInt(hex.slice(5,7), 16);
-      return [r, g, b];
-    });
-  
-  colorPalettes[name] = colors;
-  updatePaletteSelect();
-  document.getElementById('paletteName').value = '';
-}
-
-// Function to reset palette switching interval
-function resetPaletteInterval() {
-  if (paletteSwitchInterval) {
-    clearInterval(paletteSwitchInterval);
-  }
-  paletteSwitchInterval = setInterval(switchPalette, paletteInterval * 1000);
-}
-
-// Modify the setup function to initialize controls
-let originalSetup = setup;
-setup = function() {
-  originalSetup();
-  initializeControls();
-  resetPaletteInterval();
-}
+// Switch palette every 10 seconds
+setInterval(switchPalette, 10000);
 
